@@ -39,6 +39,10 @@ td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-
 thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
 tbody td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
 tbody tr:hover{background:var(--surface2);}
+tbody tr.selected{background:#e8eef4 !important;outline:2px solid var(--accent);}
+.btn-edit{background:var(--accent);color:#fff;}
+.btn-edit:hover{opacity:.85;}
+.btn-edit:disabled{opacity:.35;cursor:not-allowed;}
 tbody tr:last-child td{border-bottom:none;}
 td.mono{font-family:var(--mono);}
 td.center{text-align:center;}
@@ -80,7 +84,9 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="section">
     <div class="section-header">
       <span class="section-label">作業明細一覧</span>
-      <div class="section-actions"><button class="btn btn-green" onclick="exportCsv('sagyou')">
+      <div class="section-actions">
+      <button class="btn btn-edit" id="btn-edit" disabled onclick="openEdit()">✏️ 編集</button>
+      <button class="btn btn-green" onclick="exportCsv('sagyou')">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         CSV出力
       </button></div>
@@ -231,7 +237,7 @@ function renderAll(){
 function renderKintai(data){
   const tbody=document.getElementById('kintai-tbody');
   if(!data.length){tbody.innerHTML='<tr><td colspan="9" class="empty-cell">データがありません</td></tr>';return;}
-  tbody.innerHTML=data.map(d=>`<tr>
+  tbody.innerHTML=data.map(d=>`<tr class="clickable-row" onclick="selectRow(this,'${d.date}','${d.name}')">
     <td>${d.date}</td><td class="col-name" title="${d.name}">${d.name}</td>
     <td class="mono">${d.checkin||'—'}</td><td class="mono">${d.checkout||'—'}</td>
     <td>${d.breakMin?d.breakMin+'分':'—'}</td><td class="mono">${d.worktime||'—'}</td>
@@ -259,6 +265,22 @@ function renderSagyou(data){
     <td>${r.kojimei||''}</td><td>${r.type||'—'}</td>
     <td>${r.detail||'—'}</td><td>${r.progress||'—'}</td>
   </tr>`).join('');
+}
+
+// 行選択
+let selectedDate='', selectedName='';
+function selectRow(tr, date, name){
+  document.querySelectorAll('.clickable-row').forEach(r=>r.classList.remove('selected'));
+  tr.classList.add('selected');
+  selectedDate=date; selectedName=name;
+  document.getElementById('btn-edit').disabled=false;
+}
+
+// 編集画面を開く
+function openEdit(){
+  if(!selectedDate||!selectedName)return;
+  const url='SRD日報入力.html?date='+encodeURIComponent(selectedDate)+'&name='+encodeURIComponent(selectedName);
+  window.open(url,'_blank');
 }
 
 function exportCsv(type){

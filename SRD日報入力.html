@@ -403,9 +403,95 @@ window.onload=async()=>{
   document.getElementById('header-date').textContent=today.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   calcWorkTime();
   await fetchUserName();
-  addRow(); addRow(); addRow();
+
+  // URLパラメータで日付・名前が渡された場合はデータ読み込みモード
+  const params=new URLSearchParams(window.location.search);
+  const editDate=params.get('date');
+  const editName=params.get('name');
+  if(editDate && editName){
+    await loadExistingData(editDate, editName);
+  } else {
+    addRow(); addRow(); addRow();
+  }
   drawClock();
 };
+
+// 既存データをSharePointから読み込んでフォームにセット
+async function loadExistingData(date, name){
+  try{
+    const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
+    const text=await res.text();
+    if(!text)throw new Error('no data');
+    const j=JSON.parse(text);
+    const items=j.value||j.body?.value||[];
+    const item=items.find(it=>{
+      const d=(it['OData__x65e5__x4ed8_']||'').trim();
+      const n=(it['OData__x4f5c__x696d__x8005__x540d_']||'').trim();
+      return d===date && n===name;
+    });
+    if(!item){
+      alert('データが見つかりませんでした。新規入力モードで開きます。');
+      addRow(); addRow(); addRow();
+      return;
+    }
+    // HTMLをパースしてフォームにセット
+    const rawHtml=item['OData__x5185__x5bb9_']||item['OData__x5185_x5bb9_']||'';
+    const decoded=(()=>{const t=document.createElement('textarea');t.innerHTML=rawHtml;return t.value;})();
+    const div=document.createElement('div');
+    div.innerHTML=decoded;
+    const allTds=div.querySelectorAll('table:first-of-type td');
+    const map={};
+    for(let i=0;i<allTds.length-1;i+=2){
+      map[allTds[i].textContent.trim()]=allTds[i+1].textContent.trim();
+    }
+    // 基本情報セット
+    document.getElementById('f-date').value=date;
+    const nameEl=document.getElementById('f-name');
+    [...nameEl.options].forEach(o=>{if(o.value===name)o.selected=true;});
+    document.getElementById('f-note').value=map['備考']||'';
+    // 勤怠情報セット
+    const checkin=(map['出勤']||'09:00');
+    const checkout=(map['退勤']||'18:00');
+    document.getElementById('f-checkin').value=checkin;
+    document.getElementById('val-checkin').textContent=checkin;
+    document.getElementById('f-checkout').value=checkout;
+    document.getElementById('val-checkout').textContent=checkout;
+    const bm=(map['休憩']||'90').replace('分','');
+    document.getElementById('f-break').value=bm;
+    const commute=(map['通い出張手当']||'').includes('✓');
+    const lodging=(map['宿泊出張手当']||'').includes('✓');
+    document.getElementById('f-commute').checked=commute;
+    document.getElementById('lbl-commute').classList.toggle('checked',commute);
+    document.getElementById('f-lodging').checked=lodging;
+    document.getElementById('lbl-lodging').classList.toggle('checked',lodging);
+    calcWorkTime();
+    // 作業明細セット
+    const tables=div.querySelectorAll('table');
+    if(tables.length>=2){
+      const trs=tables[1].querySelectorAll('tbody tr');
+      trs.forEach(tr=>{
+        const cells=[...tr.querySelectorAll('td')].map(td=>td.textContent.trim());
+        if(cells.length>=5){
+          const dur=cells[0];
+          const durParts=dur.match(/(\d+)h\s*(\d+)m/);
+          const durMin=durParts?parseInt(durParts[1])*60+parseInt(durParts[2]):0;
+          const seiban=cells[1]==='—'?'':cells[1];
+          const kojimei=cells[2]==='—'?'':cells[2];
+          addRow(durMin,seiban,kojimei,cells[3],cells[4],cells[5]||'');
+        }
+      });
+    }
+    if(document.querySelectorAll('.work-row').length===0){addRow();addRow();addRow();}
+    updateRowCount();
+    // 編集モード表示
+    document.title='SRD日報入力（編集）';
+    document.querySelector('.header h1').textContent='SRD日報入力（編集）';
+  }catch(e){
+    console.error(e);
+    alert('データ読み込みに失敗しました: '+e.message);
+    addRow(); addRow(); addRow();
+  }
+}
 function fmtDate(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 
 function fetchUserName(){
