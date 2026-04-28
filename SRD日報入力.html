@@ -596,16 +596,16 @@ async function saveReport(){
   const rows=collectRows();
   if(!date||!name){showStatus('作業日と作業者名を入力してください。','err');return;}
   if(!rows.length){showStatus('作業を1件以上入力してください。','err');return;}
-  // ②作業時間がある行は作業詳細・作業種別・進捗が必須
+  // 作業時間がある行は作業詳細・作業種別・進捗が必須
   for(let i=0;i<rows.length;i++){
     const r=rows[i];
     if(r.durMin>0){
-      if(!r.type){showStatus(`作業明細 ${i+1}行目：作業時間が入力されている場合、作業種別は必須です。`,'err');return;}
-      if(!r.detail){showStatus(`作業明細 ${i+1}行目：作業時間が入力されている場合、作業詳細は必須です。`,'err');return;}
-      if(!r.progress){showStatus(`作業明細 ${i+1}行目：作業時間が入力されている場合、進捗は必須です。`,'err');return;}
+      if(!r.type){showStatus('作業明細 '+(i+1)+'行目：作業時間が入力されている場合、作業種別は必須です。','err');return;}
+      if(!r.detail){showStatus('作業明細 '+(i+1)+'行目：作業時間が入力されている場合、作業詳細は必須です。','err');return;}
+      if(!r.progress){showStatus('作業明細 '+(i+1)+'行目：作業時間が入力されている場合、進捗は必須です。','err');return;}
     }
-    // ③製番は数字4桁またはnull
-    if(r.seiban && !/^\d{4}$/.test(r.seiban)){showStatus(`作業明細 ${i+1}行目：製番は数字4桁で入力してください（未入力も可）。`,'err');return;}
+    // 製番は数字4桁またはnull
+    if(r.seiban && !/^\d{4}$/.test(r.seiban)){showStatus('作業明細 '+(i+1)+'行目：製番は数字4桁で入力してください（未入力も可）。','err');return;}
   }
   const wm=parseInt(document.getElementById('f-worktime').dataset.min)||0;
   const tm=parseInt(document.getElementById('total-time').dataset.min)||0;
@@ -626,13 +626,10 @@ async function saveReport(){
         return d===date && n===name;
       });
       if(submitted){
-        const overwrite=confirm(date+' の '+name+' の日報はすでに提出済みです。
-上書きしますか？');
-        if(!overwrite){
-          showStatus('⚠ 上書きをキャンセルしました。','err');
-          btn.disabled=false;
-          return;
-        }
+        btn.disabled=false;
+        const overwrite=confirm(date+' の '+name+' の日報はすでに提出済みです。上書きしますか？');
+        if(!overwrite){showStatus('⚠ 上書きをキャンセルしました。','err');return;}
+        btn.disabled=true;
       }
     }
   }catch(e){/* チェック失敗は無視して続行 */}
