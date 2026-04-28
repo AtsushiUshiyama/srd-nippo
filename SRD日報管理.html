@@ -259,7 +259,7 @@ function renderSagyou(data){
     })
     .map(r=>({date:d.date,name:d.name,...r})));
   if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="empty-cell">データがありません</td></tr>';return;}
-  tbody.innerHTML=rows.map(r=>`<tr>
+  tbody.innerHTML=rows.map(r=>`<tr class="clickable-row" onclick="selectRow(this,'${r.date}','${r.name}')">
     <td>${r.date}</td><td class="col-name" title="${r.name}">${r.name}</td>
     <td class="mono">${r.duration||'—'}</td><td>${r.seiban||'—'}</td>
     <td>${r.kojimei||''}</td><td>${r.type||'—'}</td>
