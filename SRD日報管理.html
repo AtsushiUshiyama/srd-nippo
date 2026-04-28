@@ -270,10 +270,17 @@ function renderSagyou(data){
 // 行選択
 let selectedDate='', selectedName='';
 function selectRow(tr, date, name){
+  const isSelected=tr.classList.contains('selected');
   document.querySelectorAll('.clickable-row').forEach(r=>r.classList.remove('selected'));
-  tr.classList.add('selected');
-  selectedDate=date; selectedName=name;
-  document.getElementById('btn-edit').disabled=false;
+  if(isSelected){
+    // もう一度クリックで選択解除
+    selectedDate=''; selectedName='';
+    document.getElementById('btn-edit').disabled=true;
+  } else {
+    tr.classList.add('selected');
+    selectedDate=date; selectedName=name;
+    document.getElementById('btn-edit').disabled=false;
+  }
 }
 
 // 編集画面を開く
@@ -302,6 +309,8 @@ function showLoading(v){document.getElementById('loading').style.display=v?'flex
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
 function clearFilters(){
   ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho'].forEach(id=>document.getElementById(id).value='');
+  selectedDate=''; selectedName='';
+  document.getElementById('btn-edit').disabled=true;
   renderAll();
 }
 
