@@ -626,9 +626,13 @@ async function saveReport(){
         return d===date && n===name;
       });
       if(submitted){
-        showStatus('⚠ '+date+' の日報はすでに提出済みです。','err');
-        btn.disabled=false;
-        return;
+        const overwrite=confirm(date+' の '+name+' の日報はすでに提出済みです。
+上書きしますか？');
+        if(!overwrite){
+          showStatus('⚠ 上書きをキャンセルしました。','err');
+          btn.disabled=false;
+          return;
+        }
       }
     }
   }catch(e){/* チェック失敗は無視して続行 */}
