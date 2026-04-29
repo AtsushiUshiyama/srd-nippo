@@ -148,7 +148,7 @@ async function loadData(){
         created:item.Created||'',
         ...parsed
       };
-    }).sort((a,b)=>new Date(b.created)-new Date(a.created));
+    }).sort((a,b)=>b.created.localeCompare(a.created));
     populateFilters();
     renderAll();
   }catch(e){
@@ -158,25 +158,35 @@ async function loadData(){
   showLoading(false);
 }
 
+// 高速HTMLパース（正規表現ベース・DOMを使わない）
+const HTML_ENT={'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':"'"};
 function decodeHtmlEntities(str){
-  const txt=document.createElement('textarea');
-  txt.innerHTML=str;
-  return txt.value;
+  return str.replace(/&(?:amp|lt|gt|quot|#39);/g,m=>HTML_ENT[m]||m);
 }
-
+function extractTds(html){
+  const re=/<td[^>]*>(.*?)<\/td>/gis,out=[];
+  let m;while((m=re.exec(html))!==null)out.push(m[1].replace(/<[^>]+>/g,'').trim());
+  return out;
+}
+function extractTrs(html){
+  const re=/<tr[^>]*>(.*?)<\/tr>/gis,out=[];
+  let m;while((m=re.exec(html))!==null)out.push(m[1]);
+  return out;
+}
+function extractTables(html){
+  const re=/<table[^>]*>(.*?)<\/table>/gis,out=[];
+  let m;while((m=re.exec(html))!==null)out.push(m[1]);
+  return out;
+}
 function parseReportHtml(html){
   const empty={checkin:'',checkout:'',breakMin:'',worktime:'',commute:false,lodging:false,note:'',rows:[]};
   if(!html)return empty;
   try{
-    const div=document.createElement('div');
-    div.innerHTML=html;
-    const allTds=div.querySelectorAll('table:first-of-type td');
+    const tables=extractTables(html);
+    if(!tables.length)return empty;
+    const tds=extractTds(tables[0]);
     const map={};
-    for(let i=0;i<allTds.length-1;i+=2){
-      const key=allTds[i].textContent.trim();
-      const val=allTds[i+1].textContent.trim();
-      map[key]=val;
-    }
+    for(let i=0;i<tds.length-1;i+=2)map[tds[i]]=tds[i+1];
     const checkin=map['出勤']||'';
     const checkout=map['退勤']||'';
     const breakMin=(map['休憩']||'').replace('分','');
@@ -184,13 +194,10 @@ function parseReportHtml(html){
     const commute=(map['通い出張手当']||'').includes('✓');
     const lodging=(map['宿泊出張手当']||'').includes('✓');
     const note=map['備考']||'';
-    // 2番目のtable（作業明細）
-    const tables=div.querySelectorAll('table');
     const rows=[];
     if(tables.length>=2){
-      const trs=tables[1].querySelectorAll('tbody tr');
-      trs.forEach(tr=>{
-        const cells=[...tr.querySelectorAll('td')].map(td=>td.textContent.trim());
+      extractTrs(tables[1]).forEach(tr=>{
+        const cells=extractTds(tr);
         if(cells.length>=5){
           rows.push({
             duration:cells[0],seiban:cells[1],
