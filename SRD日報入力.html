@@ -700,7 +700,7 @@ async function saveReport(){
   btn.disabled=true; showStatus('<span class="spinner"></span> 提出済み確認中...','ing');
   // SRDサマリー取得フローで提出済みチェック
   try{
-    const chkRes=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
+    const chkRes=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:date,dateTo:date})});
     const chkText=await chkRes.text();
     if(chkText){
       const chkJson=JSON.parse(chkText);
