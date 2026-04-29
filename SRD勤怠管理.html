@@ -112,11 +112,11 @@ let sortKey='date', sortDir='desc';
 
 window.onload=async()=>{
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  // デフォルト：今月初め〜今日
+  // デフォルト：直近1年〜今日
   const today=new Date();
-  const firstDay=new Date(today.getFullYear(),today.getMonth(),1);
+  const oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
   const fmt=d=>d.toISOString().slice(0,10);
-  document.getElementById('filter-from').value=fmt(firstDay);
+  document.getElementById('filter-from').value=fmt(oneYearAgo);
   document.getElementById('filter-to').value=fmt(today);
   await loadData();
 };
