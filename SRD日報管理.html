@@ -236,8 +236,14 @@ function getFiltered(){
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
     return true;
   }).sort((a,b)=>{
-    const av=a[sortKey]||'', bv=b[sortKey]||'';
-    return sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    if(sortKey==='date'){
+      return sortDir==='asc'
+        ? a.date.localeCompare(b.date)
+        : b.date.localeCompare(a.date);
+    } else {
+      const av=a[sortKey]||'', bv=b[sortKey]||'';
+      return sortDir==='asc'?av.localeCompare(bv,'ja'):bv.localeCompare(av,'ja');
+    }
   });
 }
 

@@ -226,6 +226,15 @@ function getFiltered(){
     if(from&&d.date<from)return false;
     if(to&&d.date>to)return false;
     return true;
+  }).sort((a,b)=>{
+    if(sortKey==='date'){
+      return sortDir==='asc'
+        ? a.date.localeCompare(b.date)
+        : b.date.localeCompare(a.date);
+    } else {
+      const av=a[sortKey]||'', bv=b[sortKey]||'';
+      return sortDir==='asc'?av.localeCompare(bv,'ja'):bv.localeCompare(av,'ja');
+    }
   });
 }
 
