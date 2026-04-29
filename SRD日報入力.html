@@ -425,8 +425,8 @@ async function loadExistingData(date, name){
     const j=JSON.parse(text);
     const items=j.value||j.body?.value||[];
     const item=items.find(it=>{
-      const d=(it['OData__x65e5__x4ed8_']||'').trim();
-      const n=(it['OData__x4f5c__x696d__x8005__x540d_']||'').trim();
+      const d=(it['date']||'').trim();
+      const n=(it['name']||'').trim();
       return d===date && n===name;
     });
     if(!item){
@@ -707,8 +707,8 @@ async function saveReport(){
       // レスポンス構造: {body: {value: [...]}} または {value: [...]}
       const items=(chkJson.body?.value||chkJson.value||[]);
       const submitted=items.some(item=>{
-        const d=(item['OData__x65e5__x4ed8_']||'').trim();
-        const n=(item['OData__x4f5c__x696d__x8005__x540d_']||'').trim();
+        const d=(item['date']||'').trim();
+        const n=(item['name']||'').trim();
         return d===date && n===name;
       });
       if(submitted){
