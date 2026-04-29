@@ -423,7 +423,7 @@ async function loadExistingData(date, name){
     const text=await res.text();
     if(!text)throw new Error('no data');
     const j=JSON.parse(text);
-    const items=j.value||j.body?.value||[];
+    const items=Array.isArray(j)?j:j.value||j.body?.value||[];
     const item=items.find(it=>{
       const d=(it['date']||'').trim();
       const n=(it['name']||'').trim();
@@ -705,7 +705,7 @@ async function saveReport(){
     if(chkText){
       const chkJson=JSON.parse(chkText);
       // レスポンス構造: {body: {value: [...]}} または {value: [...]}
-      const items=(chkJson.body?.value||chkJson.value||[]);
+      const items=(Array.isArray(chkJson)?chkJson:chkJson.body?.value||chkJson.value||[]);
       const submitted=items.some(item=>{
         const d=(item['date']||'').trim();
         const n=(item['name']||'').trim();
