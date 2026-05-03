@@ -271,6 +271,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 
 const PA_SAVE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/0657a43012664d97aa63866ca504cedb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=AqSwt5syKn5N2aLF996_ZcBmM9J9ob8xqpFl-aKW9uo';
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2c47f740f9db47df95ffdaa5de9b982b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0bHKqk7RGW7TQ4Rnz_1cA8MyrvptqQ2iSjUozPXJuS0';
+const PA_GETONE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/99aa25c0498d495b9b626409f5fb04c2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=i-6IAJ8zepkJ1CkEjsuHrCZRHK0cet8v0IeYc8YRvfs';
 const PA_SEIBAN_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e3068ca3ecbd4819923b2d84aa473de6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Gwmz7GHGFtdX480HFikBPa57NGsRaueYvFiig48m4ag';
 const WORK_TYPES=['机ハ','机ソ','机他','盤製造','機配','試運転','打合せ','移動','その他'];
 let rowId=0, seibanCache={};
@@ -419,16 +420,14 @@ window.onload=async()=>{
 // 既存データをSharePointから読み込んでフォームにセット
 async function loadExistingData(date, name){
   try{
-    const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
+    // 新フロー（1件取得）でcontent含む全列を取得
+    const res=await fetch(PA_GETONE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,name})});
     const text=await res.text();
     if(!text)throw new Error('no data');
     const j=JSON.parse(text);
-    const items=Array.isArray(j)?j:j.value||j.body?.value||[];
-    const item=items.find(it=>{
-      const d=(it['date']||'').trim();
-      const n=(it['name']||'').trim();
-      return d===date && n===name;
-    });
+    // レスポンスは {value:[...]} または配列
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    const item=items[0];
     if(!item){
       alert('データが見つかりませんでした。新規入力モードで開きます。');
       addRow(); addRow(); addRow();

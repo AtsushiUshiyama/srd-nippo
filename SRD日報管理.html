@@ -128,18 +128,9 @@ async function loadData(){
     const j=await res.json();
     const items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
     allData=items.map(item=>{
-      // 列名を動的に検索（Selectで未マップの列にもフォールバック対応）
-      const findCol=(item,patterns)=>{
-        for(const k of Object.keys(item)){
-          if(patterns.some(p=>k.includes(p)))return item[k]||'';
-        }
-        return '';
-      };
-      // 基本情報：Selectでマップされたシンプル名を優先、なければエンコード列名から
-      const date=item.date||findCol(item,['x65e5','65e5_x4ed8']);
-      const name=item.name||findCol(item,['x4f5c','4f5c_x696d']);
-      const rawHtml=item.content||findCol(item,['x5185','5185_x5bb9']);
-      // 勤怠データ：新列（Selectでマップ済み）から直接読む
+      // 全データを新列から直接取得（contentは取得しない＝高速化）
+      const date=item.date||'';
+      const name=item.name||'';
       const checkin=item.checkin||'';
       const checkout=item.checkout||'';
       // 休憩：「90分」→数値部分のみ抽出
@@ -148,17 +139,16 @@ async function loadData(){
       // 通い出張・宿泊出張：「✓」または「－」
       const commute=item.commute==='✓';
       const lodging=item.lodging==='✓';
-      // 備考と作業明細はHTMLからパース（新列に保存されていないため）
-      const decoded=decodeHtmlEntities(rawHtml);
-      const parsed=parseReportHtml(decoded);
+      // 備考は新列から直接取得
+      const note=item.note||'';
       return {
         id:item.ID||item.Id||item.id,
         title:item.Title||'',
         date,name,
         created:item.Created||'',
         checkin,checkout,breakMin,worktime,commute,lodging,
-        note:parsed.note,
-        rows:parsed.rows
+        note,
+        rows:[]
       };
     }).sort((a,b)=>b.created.localeCompare(a.created));
     populateFilters();
