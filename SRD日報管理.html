@@ -103,18 +103,18 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 </div>
 <script>
 
-const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2c47f740f9db47df95ffdaa5de9b982b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0bHKqk7RGW7TQ4Rnz_1cA8MyrvptqQ2iSjUozPXJuS0';
+const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8b7174c6210f41a9b50a3e7796579d6e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nCORL5zEr7xEodhJd-_DDo4L4RGBcTnPiOxUpksQ2jo';
 
 let allData=[];
 let sortKey='date', sortDir='desc';
 
 window.onload=async()=>{
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  // デフォルト：直近1年〜今日
+  // デフォルト：直近1ヶ月〜今日
   const today=new Date();
-  const oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+  const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
   const fmt=d=>d.toISOString().slice(0,10);
-  document.getElementById('filter-from').value=fmt(oneYearAgo);
+  document.getElementById('filter-from').value=fmt(oneMonthAgo);
   document.getElementById('filter-to').value=fmt(today);
   await loadData();
 };
@@ -128,7 +128,7 @@ async function loadData(){
     const j=await res.json();
     const items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
     allData=items.map(item=>{
-      // 全データを新列から直接取得（contentは取得しない＝高速化）
+      // 勤怠データは新列から直接取得
       const date=item.date||'';
       const name=item.name||'';
       const checkin=item.checkin||'';
@@ -139,8 +139,14 @@ async function loadData(){
       // 通い出張・宿泊出張：「✓」または「－」
       const commute=item.commute==='✓';
       const lodging=item.lodging==='✓';
-      // 備考は新列から直接取得
-      const note=item.note||'';
+      // 備考は新列から直接取得（一括更新前は空のものあり、フォールバックでcontentからもパース）
+      let note=item.note||'';
+      // 作業明細はcontentからパース（明細用フローはcontent付き）
+      const rawHtml=item.content||'';
+      const decoded=decodeHtmlEntities(rawHtml);
+      const parsed=parseReportHtml(decoded);
+      // noteが空ならcontentから取れた値を使う（既存データ向けフォールバック）
+      if(!note&&parsed.note)note=parsed.note;
       return {
         id:item.ID||item.Id||item.id,
         title:item.Title||'',
@@ -148,7 +154,7 @@ async function loadData(){
         created:item.Created||'',
         checkin,checkout,breakMin,worktime,commute,lodging,
         note,
-        rows:[]
+        rows:parsed.rows
       };
     }).sort((a,b)=>b.created.localeCompare(a.created));
     populateFilters();
