@@ -128,25 +128,37 @@ async function loadData(){
     const j=await res.json();
     const items=j.value||j.d?.results||[];
     allData=items.map(item=>{
-      // 列名を動的に検索（エンコードが変わっても対応）
+      // 列名を動的に検索（Selectで未マップの列にもフォールバック対応）
       const findCol=(item,patterns)=>{
         for(const k of Object.keys(item)){
           if(patterns.some(p=>k.includes(p)))return item[k]||'';
         }
         return '';
       };
-      const date=findCol(item,['x65e5','65e5_x4ed8']);
-      const name=findCol(item,['x4f5c','4f5c_x696d']);
-      const rawHtml=findCol(item,['x5185','5185_x5bb9']);
-      // HTMLエンティティをデコードしてから解析
+      // 基本情報：Selectでマップされたシンプル名を優先、なければエンコード列名から
+      const date=item.date||findCol(item,['x65e5','65e5_x4ed8']);
+      const name=item.name||findCol(item,['x4f5c','4f5c_x696d']);
+      const rawHtml=item.content||findCol(item,['x5185','5185_x5bb9']);
+      // 勤怠データ：新列（Selectでマップ済み）から直接読む
+      const checkin=item.checkin||'';
+      const checkout=item.checkout||'';
+      // 休憩：「90分」→数値部分のみ抽出
+      const breakMin=(item.breakMin||'').toString().replace('分','').trim();
+      const worktime=item.worktime||'';
+      // 通い出張・宿泊出張：「✓」または「－」
+      const commute=item.commute==='✓';
+      const lodging=item.lodging==='✓';
+      // 備考と作業明細はHTMLからパース（新列に保存されていないため）
       const decoded=decodeHtmlEntities(rawHtml);
       const parsed=parseReportHtml(decoded);
       return {
-        id:item.ID||item.Id,
+        id:item.ID||item.Id||item.id,
         title:item.Title||'',
         date,name,
         created:item.Created||'',
-        ...parsed
+        checkin,checkout,breakMin,worktime,commute,lodging,
+        note:parsed.note,
+        rows:parsed.rows
       };
     }).sort((a,b)=>b.created.localeCompare(a.created));
     populateFilters();
@@ -179,21 +191,19 @@ function extractTables(html){
   return out;
 }
 function parseReportHtml(html){
-  const empty={checkin:'',checkout:'',breakMin:'',worktime:'',commute:false,lodging:false,note:'',rows:[]};
+  // 新列化により勤怠データはこの関数では取得しない
+  // 備考と作業明細のみHTMLからパース
+  const empty={note:'',rows:[]};
   if(!html)return empty;
   try{
     const tables=extractTables(html);
     if(!tables.length)return empty;
+    // 備考は1つ目のテーブルから取得
     const tds=extractTds(tables[0]);
     const map={};
     for(let i=0;i<tds.length-1;i+=2)map[tds[i]]=tds[i+1];
-    const checkin=map['出勤']||'';
-    const checkout=map['退勤']||'';
-    const breakMin=(map['休憩']||'').replace('分','');
-    const worktime=map['実働時間']||'';
-    const commute=(map['通い出張手当']||'').includes('✓');
-    const lodging=(map['宿泊出張手当']||'').includes('✓');
     const note=map['備考']||'';
+    // 作業明細は2つ目のテーブルから取得
     const rows=[];
     if(tables.length>=2){
       extractTrs(tables[1]).forEach(tr=>{
@@ -208,7 +218,7 @@ function parseReportHtml(html){
         }
       });
     }
-    return{checkin,checkout,breakMin,worktime,commute,lodging,note,rows};
+    return{note,rows};
   }catch(e){
     console.error('parse error',e);
     return empty;
