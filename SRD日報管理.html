@@ -126,7 +126,7 @@ async function loadData(){
     const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:document.getElementById('filter-from').value||'2000-01-01',dateTo:document.getElementById('filter-to').value||'2099-12-31'})});
     if(!res.ok){showError('取得失敗: '+res.status);showLoading(false);return;}
     const j=await res.json();
-    const items=j.value||j.d?.results||[];
+    const items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
     allData=items.map(item=>{
       // 列名を動的に検索（Selectで未マップの列にもフォールバック対応）
       const findCol=(item,patterns)=>{
