@@ -71,9 +71,9 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div id="error-msg"></div>
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="renderAll()"></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="renderAll()"></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 1800" oninput="renderAll()" style="font-family:var(--mono);width:100%"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="loadData()"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="loadData()"></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 1800" onkeydown="if(event.key==='Enter')loadData()" onchange="loadData()" style="font-family:var(--mono);width:100%"></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" onclick="clearFilters()">リセット</button>
@@ -104,6 +104,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 <script>
 
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8b7174c6210f41a9b50a3e7796579d6e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nCORL5zEr7xEodhJd-_DDo4L4RGBcTnPiOxUpksQ2jo';
+const PA_SEIBAN_SEARCH_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e1df3027f18b4984ad46648c947328db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b1IAKf3DEZuPImWQrkTjsw60fIwx_gZXtvcekOd-2Lc';
 
 let allData=[];
 let sortKey='date', sortDir='desc';
@@ -123,7 +124,15 @@ async function loadData(){
   showLoading(true);
   document.getElementById('error-msg').style.display='none';
   try{
-    const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:document.getElementById('filter-from').value||'2000-01-01',dateTo:document.getElementById('filter-to').value||'2099-12-31'})});
+    const seiban=document.getElementById('filter-seiban').value.trim();
+    let res;
+    if(seiban){
+      // 製番フィルター入力時：サーバー側で製番検索（期間無限定）
+      res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban})});
+    }else{
+      // 通常：日付範囲で取得
+      res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:document.getElementById('filter-from').value||'2000-01-01',dateTo:document.getElementById('filter-to').value||'2099-12-31'})});
+    }
     if(!res.ok){showError('取得失敗: '+res.status);showLoading(false);return;}
     const j=await res.json();
     const items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
