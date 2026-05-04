@@ -71,16 +71,16 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div id="error-msg"></div>
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="loadData()"></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="loadData()"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" onkeydown="if(event.key==='Enter')loadData()" onchange="loadData()" style="font-family:var(--mono);width:100%;height:34px;box-sizing:border-box"></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" style="font-family:var(--mono);width:100%;height:34px;box-sizing:border-box"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
       <button class="btn btn-secondary" onclick="setPeriod('1m')">直近1か月</button>
       <button class="btn btn-secondary" onclick="clearFilters()">リセット</button>
-      <button class="btn btn-primary" onclick="loadData()">
+      <button class="btn btn-primary" onclick="reloadData()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
         再読み込み
       </button>
@@ -388,18 +388,31 @@ function exportCsv(type){
 function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
+function reloadData(){
+  // 製番空欄かつ日付範囲が長期（1年超）の場合は確認ダイアログ
+  const seibanRaw=document.getElementById('filter-seiban').value.trim();
+  if(!seibanRaw){
+    const from=document.getElementById('filter-from').value;
+    const to=document.getElementById('filter-to').value;
+    if(from&&to){
+      const fromD=new Date(from);
+      const toD=new Date(to);
+      const days=(toD-fromD)/(1000*60*60*24);
+      if(days>366){
+        if(!confirm('1年を超える期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？')){
+          return;
+        }
+      }
+    }
+  }
+  loadData();
+}
+
 function setPeriod(period){
   const today=new Date();
   const fmt=d=>d.toISOString().slice(0,10);
   let from='';
   if(period==='all'){
-    // 製番が空欄で全期間検索する場合は確認ダイアログ
-    const seibanRaw=document.getElementById('filter-seiban').value.trim();
-    if(!seibanRaw){
-      if(!confirm('全期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？')){
-        return;
-      }
-    }
     from='2000-01-01';
   }else if(period==='1y'){
     const d=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
@@ -410,20 +423,20 @@ function setPeriod(period){
   }
   document.getElementById('filter-from').value=from;
   document.getElementById('filter-to').value=fmt(today);
-  loadData();
+  // 日付欄をセットするだけ。データ取得は「再読み込み」ボタンで実行。
 }
 
 function clearFilters(){
   ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
-  // 日付を初期値（直近1ヶ月）に戻して再取得
+  // 日付を初期値（直近1ヶ月）に戻す（データ取得は「再読み込み」ボタンで）
   const today=new Date();
   const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
   const fmt=d=>d.toISOString().slice(0,10);
   document.getElementById('filter-from').value=fmt(oneMonthAgo);
   document.getElementById('filter-to').value=fmt(today);
-  loadData();
+  renderAll();
 }
 
 </script>
