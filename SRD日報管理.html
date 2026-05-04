@@ -129,12 +129,13 @@ async function loadData(){
   try{
     const seibanRaw=document.getElementById('filter-seiban').value.trim();
     const seibanPadded=seibanRaw?seibanRaw.padStart(4,'0'):'';
+    const seibanStripped=seibanRaw?seibanRaw.replace(/^0+/,'')||'0':'';
     let items=[];
     if(seibanRaw){
-      // 製番フィルター入力時：入力値とゼロ埋め値の両方で検索（OR検索）
-      // 例: "651" → "651" と "0651" の両方を検索
-      const queries=[seibanRaw];
-      if(seibanRaw!==seibanPadded)queries.push(seibanPadded);
+      // 製番フィルター入力時：入力値・ゼロ埋め値・先頭ゼロ削除値の全パターンで検索（OR検索）
+      // 例: "651" → "651" と "0651" を検索
+      // 例: "0651" → "0651" と "651" を検索
+      const queries=Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v)));
       const results=await Promise.all(queries.map(q=>
         fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:q})})
           .then(r=>r.ok?r.json():[])
@@ -269,8 +270,9 @@ function getFiltered(){
   const to=document.getElementById('filter-to').value;
   const seibanRaw=document.getElementById('filter-seiban').value.trim();
   const seibanPadded=seibanRaw?seibanRaw.padStart(4,'0'):'';
-  // 入力値とゼロ埋め値の両方で照合（既存データの混在に対応）
-  const seibanCandidates=seibanRaw?(seibanRaw===seibanPadded?[seibanRaw]:[seibanRaw,seibanPadded]):[];
+  const seibanStripped=seibanRaw?seibanRaw.replace(/^0+/,'')||'0':'';
+  // 入力値・ゼロ埋め値・先頭ゼロ削除値の全パターンで照合（既存データの混在に対応）
+  const seibanCandidates=seibanRaw?Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v))):[];
   const ryakusho=document.getElementById('filter-ryakusho').value;
   return allData.filter(d=>{
     if(name&&d.name!==name)return false;
