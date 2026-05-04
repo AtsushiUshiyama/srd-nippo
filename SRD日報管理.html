@@ -128,18 +128,33 @@ async function loadData(){
   document.getElementById('error-msg').style.display='none';
   try{
     const seibanRaw=document.getElementById('filter-seiban').value.trim();
-    const seiban=seibanRaw?seibanRaw.padStart(4,'0'):'';
-    let res;
-    if(seiban){
-      // 製番フィルター入力時：サーバー側で製番検索（4桁ゼロ埋め）
-      res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban})});
+    const seibanPadded=seibanRaw?seibanRaw.padStart(4,'0'):'';
+    let items=[];
+    if(seibanRaw){
+      // 製番フィルター入力時：入力値とゼロ埋め値の両方で検索（OR検索）
+      // 例: "651" → "651" と "0651" の両方を検索
+      const queries=[seibanRaw];
+      if(seibanRaw!==seibanPadded)queries.push(seibanPadded);
+      const results=await Promise.all(queries.map(q=>
+        fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:q})})
+          .then(r=>r.ok?r.json():[])
+      ));
+      // 結果をマージし、IDで重複排除
+      const idSet=new Set();
+      for(const j of results){
+        const arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
+        for(const it of arr){
+          const id=it.ID||it.Id||it.id;
+          if(!idSet.has(id)){idSet.add(id);items.push(it);}
+        }
+      }
     }else{
       // 通常：日付範囲で取得
-      res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:document.getElementById('filter-from').value||'2000-01-01',dateTo:document.getElementById('filter-to').value||'2099-12-31'})});
+      const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:document.getElementById('filter-from').value||'2000-01-01',dateTo:document.getElementById('filter-to').value||'2099-12-31'})});
+      if(!res.ok){showError('取得失敗: '+res.status);showLoading(false);return;}
+      const j=await res.json();
+      items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
     }
-    if(!res.ok){showError('取得失敗: '+res.status);showLoading(false);return;}
-    const j=await res.json();
-    const items=Array.isArray(j)?j:(j.value||j.d?.results||[]);
     allData=items.map(item=>{
       // 勤怠データは新列から直接取得
       const date=item.date||'';
@@ -253,13 +268,15 @@ function getFiltered(){
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
   const seibanRaw=document.getElementById('filter-seiban').value.trim();
-  const seiban=seibanRaw?seibanRaw.padStart(4,'0'):'';
+  const seibanPadded=seibanRaw?seibanRaw.padStart(4,'0'):'';
+  // 入力値とゼロ埋め値の両方で照合（既存データの混在に対応）
+  const seibanCandidates=seibanRaw?(seibanRaw===seibanPadded?[seibanRaw]:[seibanRaw,seibanPadded]):[];
   const ryakusho=document.getElementById('filter-ryakusho').value;
   return allData.filter(d=>{
     if(name&&d.name!==name)return false;
     if(from&&d.date<from)return false;
     if(to&&d.date>to)return false;
-    if(seiban&&!d.rows.some(r=>r.seiban&&r.seiban.includes(seiban)))return false;
+    if(seibanCandidates.length&&!d.rows.some(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
     return true;
   }).sort((a,b)=>{
