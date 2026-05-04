@@ -393,6 +393,13 @@ function setPeriod(period){
   const fmt=d=>d.toISOString().slice(0,10);
   let from='';
   if(period==='all'){
+    // 製番が空欄で全期間検索する場合は確認ダイアログ
+    const seibanRaw=document.getElementById('filter-seiban').value.trim();
+    if(!seibanRaw){
+      if(!confirm('全期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？')){
+        return;
+      }
+    }
     from='2000-01-01';
   }else if(period==='1y'){
     const d=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
