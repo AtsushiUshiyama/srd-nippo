@@ -73,9 +73,12 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="loadData()"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="loadData()"></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 1800" onkeydown="if(event.key==='Enter')loadData()" onchange="loadData()" style="font-family:var(--mono);width:100%"></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" onkeydown="if(event.key==='Enter')loadData()" onchange="loadData()" style="font-family:var(--mono);width:100%;height:34px;box-sizing:border-box"></div>
     <div class="filter-actions">
+      <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
+      <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
+      <button class="btn btn-secondary" onclick="setPeriod('1m')">直近1か月</button>
       <button class="btn btn-secondary" onclick="clearFilters()">リセット</button>
       <button class="btn btn-primary" onclick="loadData()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
@@ -124,10 +127,11 @@ async function loadData(){
   showLoading(true);
   document.getElementById('error-msg').style.display='none';
   try{
-    const seiban=document.getElementById('filter-seiban').value.trim();
+    const seibanRaw=document.getElementById('filter-seiban').value.trim();
+    const seiban=seibanRaw?seibanRaw.padStart(4,'0'):'';
     let res;
     if(seiban){
-      // 製番フィルター入力時：サーバー側で製番検索（期間無限定）
+      // 製番フィルター入力時：サーバー側で製番検索（4桁ゼロ埋め）
       res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban})});
     }else{
       // 通常：日付範囲で取得
@@ -248,14 +252,13 @@ function getFiltered(){
   const name=document.getElementById('filter-name').value;
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
-  const seiban=document.getElementById('filter-seiban').value;
+  const seibanRaw=document.getElementById('filter-seiban').value.trim();
+  const seiban=seibanRaw?seibanRaw.padStart(4,'0'):'';
   const ryakusho=document.getElementById('filter-ryakusho').value;
-  // 製番検索時はサーバー側で全期間取得済みなので、日付フィルタはスキップ
-  const skipDateFilter=!!seiban;
   return allData.filter(d=>{
     if(name&&d.name!==name)return false;
-    if(!skipDateFilter&&from&&d.date<from)return false;
-    if(!skipDateFilter&&to&&d.date>to)return false;
+    if(from&&d.date<from)return false;
+    if(to&&d.date>to)return false;
     if(seiban&&!d.rows.some(r=>r.seiban&&r.seiban.includes(seiban)))return false;
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
     return true;
@@ -363,6 +366,24 @@ function exportCsv(type){
 function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
+function setPeriod(period){
+  const today=new Date();
+  const fmt=d=>d.toISOString().slice(0,10);
+  let from='';
+  if(period==='all'){
+    from='2000-01-01';
+  }else if(period==='1y'){
+    const d=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+    from=fmt(d);
+  }else if(period==='1m'){
+    const d=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
+    from=fmt(d);
+  }
+  document.getElementById('filter-from').value=from;
+  document.getElementById('filter-to').value=fmt(today);
+  loadData();
+}
+
 function clearFilters(){
   ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
