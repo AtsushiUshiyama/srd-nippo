@@ -327,11 +327,14 @@ function renderKintai(data){
 
 function renderSagyou(data){
   const tbody=document.getElementById('sagyou-tbody');
-  const seiban=document.getElementById('filter-seiban').value;
+  const seibanRaw=document.getElementById('filter-seiban').value.trim();
+  const seibanPadded=seibanRaw?seibanRaw.padStart(4,'0'):'';
+  const seibanStripped=seibanRaw?seibanRaw.replace(/^0+/,'')||'0':'';
+  const seibanCandidates=seibanRaw?Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v))):[];
   const ryakusho=document.getElementById('filter-ryakusho').value;
   const rows=data.flatMap(d=>d.rows
     .filter(r=>{
-      if(seiban&&!(r.seiban&&r.seiban.includes(seiban)))return false;
+      if(seibanCandidates.length&&!(r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
       if(ryakusho&&!(r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
       return true;
     })
