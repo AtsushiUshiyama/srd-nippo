@@ -250,10 +250,12 @@ function getFiltered(){
   const to=document.getElementById('filter-to').value;
   const seiban=document.getElementById('filter-seiban').value;
   const ryakusho=document.getElementById('filter-ryakusho').value;
+  // 製番検索時はサーバー側で全期間取得済みなので、日付フィルタはスキップ
+  const skipDateFilter=!!seiban;
   return allData.filter(d=>{
     if(name&&d.name!==name)return false;
-    if(from&&d.date<from)return false;
-    if(to&&d.date>to)return false;
+    if(!skipDateFilter&&from&&d.date<from)return false;
+    if(!skipDateFilter&&to&&d.date>to)return false;
     if(seiban&&!d.rows.some(r=>r.seiban&&r.seiban.includes(seiban)))return false;
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
     return true;
@@ -365,7 +367,13 @@ function clearFilters(){
   ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
-  renderAll();
+  // 日付を初期値（直近1ヶ月）に戻して再取得
+  const today=new Date();
+  const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
+  const fmt=d=>d.toISOString().slice(0,10);
+  document.getElementById('filter-from').value=fmt(oneMonthAgo);
+  document.getElementById('filter-to').value=fmt(today);
+  loadData();
 }
 
 </script>
