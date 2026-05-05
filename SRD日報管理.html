@@ -26,6 +26,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-primary{background:var(--accent);color:#fff;}
 .btn-secondary{background:none;border:1px solid var(--border);color:var(--text-muted);}
 .btn-green{background:var(--green);color:#fff;}
+.btn-green:disabled{opacity:.35;cursor:not-allowed;}
 .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
 .section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
@@ -76,7 +77,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');document.getElementById('btn-report-csv').disabled=!this.value.trim()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
@@ -98,6 +99,10 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-green" onclick="exportCsv('sagyou')">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         CSV出力
+      </button>
+      <button class="btn btn-green" id="btn-report-csv" disabled onclick="exportReportCsv()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        レポートCSV出力
       </button></div>
     </div>
     <div class="table-wrap"><table>
@@ -398,6 +403,77 @@ function exportCsv(type){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=(type==='kintai'?'勤怠一覧':'作業明細一覧')+'.csv';a.click();
 }
+
+// 「7h 30m」「1h」「30m」などの作業時間を分に変換
+function durationToMinutes(s){
+  if(!s)return 0;
+  let total=0;
+  const h=s.match(/(\d+)\s*h/);
+  const m=s.match(/(\d+)\s*m/);
+  if(h)total+=parseInt(h[1],10)*60;
+  if(m)total+=parseInt(m[1],10);
+  return total;
+}
+// 分を時間単位に変換（小数点第2位まで四捨五入）
+function minutesToHours(min){
+  return (Math.round(min/60*100)/100).toFixed(2)+'h';
+}
+
+function exportReportCsv(){
+  const seibanRaw=document.getElementById('filter-seiban').value.trim();
+  if(!seibanRaw)return;
+  const seibanPadded=seibanRaw.padStart(4,'0');
+  const seibanStripped=seibanRaw.replace(/^0+/,'')||'0';
+  const seibanCandidates=Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v)));
+
+  // 表示中のデータからフィルタ
+  const f=getFiltered();
+  // 製番にマッチする行だけ抽出
+  const matchingRows=f.flatMap(d=>d.rows
+    .filter(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s)))
+    .map(r=>({date:d.date,name:d.name,...r})));
+
+  // 作業種別ごとに作業時間を集計
+  const byType={};
+  let totalMin=0;
+  for(const r of matchingRows){
+    const min=durationToMinutes(r.duration);
+    const type=(r.type&&r.type.trim())||'(未分類)';
+    byType[type]=(byType[type]||0)+min;
+    totalMin+=min;
+  }
+
+  // フィルタ条件の文字列
+  const name=document.getElementById('filter-name').value||'全員';
+  const from=document.getElementById('filter-from').value||'';
+  const to=document.getElementById('filter-to').value||'';
+  const ryakusho=document.getElementById('filter-ryakusho').value||'全略称';
+  const typeFilter=document.getElementById('filter-type').value||'全種別';
+
+  // 案件名（最初にマッチした行から取得）
+  const sampleKojimei=matchingRows.length?(matchingRows[0].kojimei||''):'';
+
+  // CSV組み立て（全データ2列：左=列名、右=データ）
+  const lines=[];
+  lines.push(['製番',seibanPadded].map(csv).join(','));
+  lines.push(['期間',from+' 〜 '+to].map(csv).join(','));
+  lines.push(['作業者',name].map(csv).join(','));
+  lines.push(['略称',ryakusho].map(csv).join(','));
+  lines.push(['作業種別フィルタ',typeFilter].map(csv).join(','));
+  lines.push(['案件名',sampleKojimei].map(csv).join(','));
+  lines.push(['データ件数',matchingRows.length].map(csv).join(','));
+  lines.push('');
+  lines.push(['作業種別','作業時間'].map(csv).join(','));
+  const sortedTypes=Object.keys(byType).sort();
+  for(const t of sortedTypes){
+    lines.push([t,minutesToHours(byType[t])].map(csv).join(','));
+  }
+  lines.push(['合計',minutesToHours(totalMin)].map(csv).join(','));
+
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='レポート_製番'+seibanPadded+'.csv';a.click();
+}
 function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
@@ -443,6 +519,7 @@ function clearFilters(){
   ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho','filter-type'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
+  document.getElementById('btn-report-csv').disabled=true;
   // 日付を初期値（直近1ヶ月）に戻す（データ取得は「再読み込み」ボタンで）
   const today=new Date();
   const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
