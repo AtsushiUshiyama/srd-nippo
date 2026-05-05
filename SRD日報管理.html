@@ -91,6 +91,16 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
 
+  <div class="section" id="report-summary" style="display:none">
+    <div class="section-header">
+      <span class="section-label">📊 製番レポート</span>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;padding:16px 20px;background:var(--surface)">
+      <div id="report-info" style="flex:1;min-width:300px;font-size:13px;line-height:1.7"></div>
+      <div id="report-types" style="flex:1;min-width:280px"></div>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-header">
       <span class="section-label">作業明細一覧</span>
@@ -329,21 +339,68 @@ function renderAll(){
   updateReportButton(f);
 }
 
-// レポートCSVボタンの有効/無効：製番欄に値があり、表示中の全行の製番が単一のときのみ有効
+// レポートCSVボタンの有効/無効、およびレポート表示エリアの更新
 function updateReportButton(f){
   const btn=document.getElementById('btn-report-csv');
+  const summary=document.getElementById('report-summary');
   if(!btn)return;
   const seibanRaw=document.getElementById('filter-seiban').value.trim();
-  if(!seibanRaw){btn.disabled=true;return;}
-  // 製番フィルタ条件にマッチする行を抽出
+  if(!seibanRaw){btn.disabled=true;if(summary)summary.style.display='none';return;}
   const seibanPadded=seibanRaw.padStart(4,'0');
   const seibanStripped=seibanRaw.replace(/^0+/,'')||'0';
   const seibanCandidates=Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v)));
   const matchingRows=f.flatMap(d=>d.rows.filter(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))));
-  if(matchingRows.length===0){btn.disabled=true;return;}
-  // 表示中のマッチ行で製番がすべて同じかチェック
+  if(matchingRows.length===0){btn.disabled=true;if(summary)summary.style.display='none';return;}
   const seibanSet=new Set(matchingRows.map(r=>r.seiban));
-  btn.disabled=seibanSet.size!==1;
+  const enabled=seibanSet.size===1;
+  btn.disabled=!enabled;
+  // ボタンが有効な時はレポートサマリーを表示
+  if(enabled&&summary){
+    renderReportSummary(matchingRows);
+    summary.style.display='';
+  }else if(summary){
+    summary.style.display='none';
+  }
+}
+
+// レポートサマリーを画面に描画
+function renderReportSummary(matchingRows){
+  const seibanRaw=document.getElementById('filter-seiban').value.trim();
+  const seibanPadded=seibanRaw.padStart(4,'0');
+  const name=document.getElementById('filter-name').value||'全員';
+  const from=document.getElementById('filter-from').value||'';
+  const to=document.getElementById('filter-to').value||'';
+  const ryakusho=document.getElementById('filter-ryakusho').value||'全略称';
+  const typeFilter=document.getElementById('filter-type').value||'全種別';
+  const sampleKojimei=matchingRows.length?(matchingRows[0].kojimei||''):'';
+
+  const byType={};
+  let totalMin=0;
+  for(const r of matchingRows){
+    const min=durationToMinutes(r.duration);
+    const type=(r.type&&r.type.trim())||'(未分類)';
+    byType[type]=(byType[type]||0)+min;
+    totalMin+=min;
+  }
+  const sortedTypes=Object.keys(byType).sort();
+
+  const info=document.getElementById('report-info');
+  info.innerHTML=`
+    <div><span style="color:var(--text-muted);font-size:11px">製番</span> <strong style="font-family:var(--mono);font-size:16px">${seibanPadded}</strong></div>
+    <div><span style="color:var(--text-muted);font-size:11px">案件名</span> ${sampleKojimei||'—'}</div>
+    <div><span style="color:var(--text-muted);font-size:11px">期間</span> ${from} 〜 ${to}</div>
+    <div><span style="color:var(--text-muted);font-size:11px">作業者</span> ${name} ／ <span style="color:var(--text-muted);font-size:11px">略称</span> ${ryakusho} ／ <span style="color:var(--text-muted);font-size:11px">作業種別フィルタ</span> ${typeFilter}</div>
+    <div><span style="color:var(--text-muted);font-size:11px">データ件数</span> <strong>${matchingRows.length}件</strong></div>
+  `;
+
+  const types=document.getElementById('report-types');
+  let html='<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)">作業種別</th><th style="text-align:right;padding:6px 10px;border-bottom:1px solid var(--border)">作業時間 (h)</th></tr></thead><tbody>';
+  for(const t of sortedTypes){
+    html+=`<tr><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${t}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono)">${minutesToHours(byType[t])}</td></tr>`;
+  }
+  html+=`<tr><td style="padding:8px 10px;font-weight:bold">合計</td><td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-weight:bold;font-size:15px">${minutesToHours(totalMin)}</td></tr>`;
+  html+='</tbody></table>';
+  types.innerHTML=html;
 }
 
 function renderKintai(data){
