@@ -74,6 +74,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" style="font-family:var(--mono);width:100%;height:34px;box-sizing:border-box"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
@@ -262,6 +263,13 @@ function populateFilters(){
   }));
   const rs=document.getElementById('filter-ryakusho');
   rs.innerHTML='<option value="">全略称</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}</option>`).join('');
+  // 作業種別を抽出
+  const typeSet=new Set();
+  allData.forEach(d=>d.rows.forEach(r=>{
+    if(r.type&&r.type!=='—'&&r.type.trim())typeSet.add(r.type.trim());
+  }));
+  const ts=document.getElementById('filter-type');
+  ts.innerHTML='<option value="">全種別</option>'+[...typeSet].sort().map(v=>`<option value="${v}">${v}</option>`).join('');
 }
 
 function getFiltered(){
@@ -274,12 +282,14 @@ function getFiltered(){
   // 入力値・ゼロ埋め値・先頭ゼロ削除値の全パターンで照合（既存データの混在に対応）
   const seibanCandidates=seibanRaw?Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v))):[];
   const ryakusho=document.getElementById('filter-ryakusho').value;
+  const typeFilter=document.getElementById('filter-type').value;
   return allData.filter(d=>{
     if(name&&d.name!==name)return false;
     if(from&&d.date<from)return false;
     if(to&&d.date>to)return false;
     if(seibanCandidates.length&&!d.rows.some(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
+    if(typeFilter&&!d.rows.some(r=>r.type&&r.type.trim()===typeFilter))return false;
     return true;
   }).sort((a,b)=>{
     if(sortKey==='date'){
@@ -332,10 +342,12 @@ function renderSagyou(data){
   const seibanStripped=seibanRaw?seibanRaw.replace(/^0+/,'')||'0':'';
   const seibanCandidates=seibanRaw?Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v))):[];
   const ryakusho=document.getElementById('filter-ryakusho').value;
+  const typeFilter=document.getElementById('filter-type').value;
   const rows=data.flatMap(d=>d.rows
     .filter(r=>{
       if(seibanCandidates.length&&!(r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
       if(ryakusho&&!(r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
+      if(typeFilter&&!(r.type&&r.type.trim()===typeFilter))return false;
       return true;
     })
     .map(r=>({date:d.date,name:d.name,...r})));
@@ -427,7 +439,7 @@ function setPeriod(period){
 }
 
 function clearFilters(){
-  ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho'].forEach(id=>document.getElementById(id).value='');
+  ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho','filter-type'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
   // 日付を初期値（直近1ヶ月）に戻す（データ取得は「再読み込み」ボタンで）
