@@ -15,6 +15,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .header-sub{font-size:12px;color:#aaa;margin-left:auto;font-family:var(--mono);}
 .main{max-width:1400px;margin:0 auto;padding:24px 20px 80px;}
 .filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.filter-sticky{position:sticky;top:0;z-index:100;background:var(--bg);padding-top:8px;margin-top:-8px;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
 .filter-field{display:flex;flex-direction:column;gap:5px;}
 .filter-field label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.06em;}
 .filter-field select,.filter-field input{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;}
@@ -65,13 +66,17 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 </div>
 <div class="main">
   <div id="error-msg"></div>
+  <div class="filter-sticky">
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="renderAll()"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="renderAll()"></div>
     <div class="filter-actions">
+      <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
+      <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
+      <button class="btn btn-secondary" onclick="setPeriod('1m')">直近1か月</button>
       <button class="btn btn-secondary" onclick="clearFilters()">リセット</button>
-      <button class="btn btn-primary" onclick="loadData()">
+      <button class="btn btn-primary" onclick="reloadData()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
         再読み込み
       </button>
@@ -86,6 +91,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <button class="btn btn-secondary" onclick="filterDay(4)">4日前</button>
     <button class="btn btn-secondary" onclick="filterDay(5)">5日前</button>
 
+  </div>
   </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
   <div class="section">
@@ -331,6 +337,40 @@ function filterShime(){
   document.getElementById('filter-to').value=fmtDate(to);
   renderAll();
 }
+function setPeriod(period){
+  const today=new Date();
+  const fmt=d=>d.toISOString().slice(0,10);
+  let from='';
+  if(period==='all'){
+    from='2000-01-01';
+  }else if(period==='1y'){
+    const d=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+    from=fmt(d);
+  }else if(period==='1m'){
+    const d=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
+    from=fmt(d);
+  }
+  document.getElementById('filter-from').value=from;
+  document.getElementById('filter-to').value=fmt(today);
+  // 日付欄をセットするだけ。データ取得は「再読み込み」ボタンで実行。
+}
+
+function reloadData(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  if(from&&to){
+    const fromD=new Date(from);
+    const toD=new Date(to);
+    const days=(toD-fromD)/(1000*60*60*24);
+    if(days>366){
+      if(!confirm('1年を超える期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？')){
+        return;
+      }
+    }
+  }
+  loadData();
+}
+
 function clearFilters(){
   ['filter-name','filter-from','filter-to'].forEach(id=>document.getElementById(id).value='');
   renderAll();
