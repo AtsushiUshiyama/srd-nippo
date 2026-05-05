@@ -394,7 +394,7 @@ function renderReportSummary(matchingRows){
   `;
 
   const types=document.getElementById('report-types');
-  let html='<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)">作業種別</th><th style="text-align:right;padding:6px 10px;border-bottom:1px solid var(--border)">作業時間 (h)</th></tr></thead><tbody>';
+  let html='<table style="width:100%;font-size:13px"><thead><tr><th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);text-transform:none">作業種別</th><th style="text-align:right;padding:6px 10px;border-bottom:1px solid var(--border);text-transform:none">作業時間 (h)</th></tr></thead><tbody>';
   for(const t of sortedTypes){
     html+=`<tr><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${t}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono)">${minutesToHours(byType[t])}</td></tr>`;
   }
