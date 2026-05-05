@@ -349,6 +349,12 @@ function reloadData(){
 
 function clearFilters(){
   ['filter-name','filter-from','filter-to'].forEach(id=>document.getElementById(id).value='');
+  // 日付を初期値（直近1年）に戻す（データ取得は「再読み込み」ボタンで）
+  const today=new Date();
+  const oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+  const fmt=d=>d.toISOString().slice(0,10);
+  document.getElementById('filter-from').value=fmt(oneYearAgo);
+  document.getElementById('filter-to').value=fmt(today);
   renderAll();
 }
 
