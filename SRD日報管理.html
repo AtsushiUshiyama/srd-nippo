@@ -474,7 +474,7 @@ function exportReportCsv(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='レポート_製番'+seibanPadded+'.csv';a.click();
 }
-function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
+function csv(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
 function reloadData(){
