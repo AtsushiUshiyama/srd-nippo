@@ -356,25 +356,44 @@ function filterDay(daysAgo){
 function filterMe(){
   const ME_KEY='srd_me_name';
   let me=localStorage.getItem(ME_KEY);
-  // 現在のデータから作業者リストを取得
-  const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
-  if(!me||!names.includes(me)){
-    if(!names.length){
-      alert('作業者データがまだ読み込まれていません。先に「再読み込み」してください。');
-      return;
+  if(!me){
+    // 現在のデータから作業者リストを取得
+    const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
+    let menu='自分の名前を選択してください（次回からは記憶されます）。\n\n';
+    if(names.length){
+      menu+=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
+      menu+='\n0: 上のリストにない（名前を直接入力）';
+    } else {
+      menu+='（リストが空のため、名前を直接入力してください）';
     }
-    const list=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
-    const input=prompt('自分の名前の番号を入力してください（次回からは記憶されます）:\n\n'+list);
-    if(!input)return;
-    const idx=parseInt(input,10)-1;
-    if(isNaN(idx)||idx<0||idx>=names.length){
-      alert('無効な番号です。');
-      return;
+    const input=prompt(menu);
+    if(input===null||input==='')return;
+    if(names.length&&/^\d+$/.test(input.trim())){
+      const idx=parseInt(input,10);
+      if(idx===0){
+        const typed=prompt('自分の名前を入力してください:');
+        if(!typed||!typed.trim())return;
+        me=typed.trim();
+      } else if(idx>=1&&idx<=names.length){
+        me=names[idx-1];
+      } else {
+        alert('無効な番号です。');
+        return;
+      }
+    } else {
+      // 番号形式でなければ名前として扱う
+      me=input.trim();
     }
-    me=names[idx];
     localStorage.setItem(ME_KEY,me);
   }
-  document.getElementById('filter-name').value=me;
+  // プルダウンに該当オプションがなければ一時的に追加
+  const sel=document.getElementById('filter-name');
+  if(![...sel.options].some(o=>o.value===me)){
+    const opt=document.createElement('option');
+    opt.value=me; opt.textContent=me+'（データなし）';
+    sel.appendChild(opt);
+  }
+  sel.value=me;
   renderAll();
 }
 function filterShime(){
