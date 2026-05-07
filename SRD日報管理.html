@@ -72,6 +72,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div id="error-msg"></div>
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
+    <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()">自分</button></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
@@ -588,6 +589,31 @@ function setPeriod(period){
   document.getElementById('filter-from').value=from;
   document.getElementById('filter-to').value=fmt(today);
   // 日付欄をセットするだけ。データ取得は「再読み込み」ボタンで実行。
+}
+
+function filterMe(){
+  const ME_KEY='srd_me_name';
+  let me=localStorage.getItem(ME_KEY);
+  // 現在のデータから作業者リストを取得
+  const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
+  if(!me||!names.includes(me)){
+    if(!names.length){
+      alert('作業者データがまだ読み込まれていません。先に「再読み込み」してください。');
+      return;
+    }
+    const list=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
+    const input=prompt('自分の名前の番号を入力してください（次回からは記憶されます）:\n\n'+list);
+    if(!input)return;
+    const idx=parseInt(input,10)-1;
+    if(isNaN(idx)||idx<0||idx>=names.length){
+      alert('無効な番号です。');
+      return;
+    }
+    me=names[idx];
+    localStorage.setItem(ME_KEY,me);
+  }
+  document.getElementById('filter-name').value=me;
+  renderAll();
 }
 
 function clearFilters(){
