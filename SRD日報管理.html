@@ -20,7 +20,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .filter-field select,.filter-field input{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;height:34px;box-sizing:border-box;}
 .filter-field.wide{flex:2;}
 .filter-field select:focus,.filter-field input:focus{border-color:var(--border-focus);}
-.filter-actions{display:flex;gap:8px;margin-left:auto;align-items:flex-end;}
+.filter-actions{display:flex;gap:6px;margin-left:auto;align-items:flex-end;}
+.filter-bar .btn{padding:7px 10px;}
 .btn{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:8px 16px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:none;white-space:nowrap;transition:opacity .15s;}
 .btn:hover{opacity:.85;}
 .btn-primary{background:var(--accent);color:#fff;}
@@ -71,18 +72,18 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 <div class="main">
   <div id="error-msg"></div>
   <div class="filter-bar">
-    <div class="filter-field" style="min-width:140px"><label>作業者</label>
-      <div style="display:flex;gap:6px;align-items:center;">
+    <div class="filter-field" style="min-width:130px"><label>作業者</label>
+      <div style="display:flex;gap:4px;align-items:center;">
         <select id="filter-name" onchange="renderAll()" style="flex:1;min-width:0"><option value="">全員</option></select>
-        <button class="btn btn-secondary" onclick="filterMe()" style="height:34px;padding:0 10px;flex-shrink:0">自分</button>
+        <button class="btn btn-secondary" onclick="filterMe()" style="height:34px;padding:0 8px;flex-shrink:0;font-size:12px">自分</button>
       </div>
     </div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
-    <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
+    <div class="filter-field" style="min-width:90px;max-width:120px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
+    <div class="filter-field" style="min-width:90px;max-width:120px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
+    <div style="width:1px;background:var(--border);align-self:stretch;margin:0 6px;"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
+    <div class="filter-field" style="min-width:90px;max-width:120px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
