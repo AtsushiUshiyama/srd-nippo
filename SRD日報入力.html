@@ -402,13 +402,6 @@ window.onload=async()=>{
   const today=new Date();
   document.getElementById('f-date').value=fmtDate(today);
   document.getElementById('header-date').textContent=today.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  // 直近の勤怠情報を復元
-  const savedCheckin=localStorage.getItem('dr-checkin');
-  const savedCheckout=localStorage.getItem('dr-checkout');
-  const savedBreak=localStorage.getItem('dr-break');
-  if(savedCheckin){document.getElementById('f-checkin').value=savedCheckin;document.getElementById('val-checkin').textContent=savedCheckin;}
-  if(savedCheckout){document.getElementById('f-checkout').value=savedCheckout;document.getElementById('val-checkout').textContent=savedCheckout;}
-  if(savedBreak){document.getElementById('f-break').value=savedBreak;}
   calcWorkTime();
   await fetchUserName();
 
@@ -732,6 +725,9 @@ async function saveReport(){
       body:JSON.stringify({date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows,html})});
     if(res.ok||res.status===202){
       showStatus('✓ 保存成功。お疲れ様でした。','ok');
+      localStorage.setItem('dr-checkin',checkin);
+      localStorage.setItem('dr-checkout',checkout);
+      localStorage.setItem('dr-break',breakMin);
     }else showStatus('保存失敗（'+res.status+'）','err');
   }catch(e){showStatus('接続失敗: '+e.message,'err');}
   btn.disabled=false;
