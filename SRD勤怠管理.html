@@ -105,8 +105,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       </button></div>
     </div>
     <div class="table-wrap"><table>
-      <thead><tr><th class="sortable" style="width:100px" onclick="sortBy('date')">作業日</th><th class="sortable" style="width:100px" onclick="sortBy('name')">作業者名</th><th style="width:100px">出勤</th><th style="width:100px">退勤</th><th style="width:100px">休憩</th><th style="width:100px">実働時間</th><th style="width:100px">通い出張</th><th style="width:100px">宿泊出張</th><th>備考</th></tr></thead>
-      <tbody id="kintai-tbody"><tr><td colspan="9" class="empty-cell">読み込み中...</td></tr></tbody>
+      <thead><tr><th class="sortable" style="width:100px" onclick="sortBy('date')">作業日</th><th class="sortable" style="width:100px" onclick="sortBy('name')">作業者名</th><th style="width:100px">勤務区分</th><th style="width:100px">出勤</th><th style="width:100px">退勤</th><th style="width:100px">休憩</th><th style="width:100px">実働時間</th><th style="width:100px">通い出張</th><th style="width:100px">宿泊出張</th><th>備考</th></tr></thead>
+      <tbody id="kintai-tbody"><tr><td colspan="10" class="empty-cell">読み込み中...</td></tr></tbody>
     </table></div>
   </div>
 
@@ -151,13 +151,14 @@ async function loadData(){
       const lodging=item.lodging==='✓';
       // 備考は新列から直接取得
       const note=item.note||'';
+      const kintai=item.kintai||'';
       return {
         id:item.ID||item.Id||item.id,
         title:item.Title||'',
         date,name,
         created:item.Created||'',
         checkin,checkout,breakMin,worktime,commute,lodging,
-        note,
+        note,kintai,
         rows:[]
       };
     }).sort((a,b)=>b.created.localeCompare(a.created));
@@ -274,10 +275,10 @@ function renderAll(){
 
 function renderKintai(data){
   const tbody=document.getElementById('kintai-tbody');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="9" class="empty-cell">データがありません</td></tr>';return;}
+  if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="empty-cell">データがありません</td></tr>';return;}
   tbody.innerHTML=data.map(d=>`<tr class="clickable-row" onclick="selectRow(this,'${d.date}','${d.name}')">
     <td>${d.date}</td><td class="col-name" title="${d.name}">${d.name}</td>
-    <td class="mono">${d.checkin||'—'}</td><td class="mono">${d.checkout||'—'}</td>
+    <td>${d.kintai||'通常出勤'}</td><td class="mono">${d.checkin||'—'}</td><td class="mono">${d.checkout||'—'}</td>
     <td>${d.breakMin?d.breakMin+'分':'—'}</td><td class="mono">${d.worktime||'—'}</td>
     <td class="center">${d.commute?'<span class="badge-yes">✓</span>':''}</td>
     <td class="center">${d.lodging?'<span class="badge-yes">✓</span>':''}</td>
@@ -331,7 +332,7 @@ function exportCsv(type){
   let header,rows;
   if(type==='kintai'){
     header='日付,作業者名,出勤,退勤,休憩(分),実働時間,通い出張手当,宿泊出張手当,備考';
-    rows=f.map(d=>[d.date,d.name,d.checkin,d.checkout,d.breakMin,d.worktime,d.commute?'✓':'',d.lodging?'✓':'',d.note].map(csv).join(','));
+    rows=f.map(d=>[d.date,d.name,d.kintai||'通常出勤',d.checkin,d.checkout,d.breakMin,d.worktime,d.commute?'✓':'',d.lodging?'✓':'',d.note].map(csv).join(','));
   }else{
     header='作業日,作業者名,作業時間,製番,案件名,作業種別,作業詳細,進捗';
     rows=f.flatMap(d=>d.rows.map(r=>[d.date,d.name,r.duration,r.seiban,r.kojimei,r.type,r.detail,r.progress].map(csv).join(',')));

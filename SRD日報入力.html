@@ -696,10 +696,21 @@ async function saveReport(){
   const breakMin=document.getElementById('f-break').value;
   const worktime=document.getElementById('f-worktime').value;
   const commute=document.getElementById('f-commute').checked;
-  const lodging=document.getElementById('f-lodging').checked;
-  const rows=collectRows();
+  let lodging=document.getElementById('f-lodging').checked;
+  let rows=collectRows();
+
+  // 欠勤・休暇の場合は勤怠・作業明細をすべて空にする
+  const isAbsent=kintai==='欠勤'||kintai==='休暇';
+  let effectiveCheckin=checkin, effectiveCheckout=checkout, effectiveBreakMin=breakMin;
+  let effectiveWorktime=worktime, effectiveCommute=commute, effectiveLodging=lodging;
+  if(isAbsent){
+    effectiveCheckin=''; effectiveCheckout=''; effectiveBreakMin='';
+    effectiveWorktime=''; effectiveCommute=false; effectiveLodging=false;
+    rows=[];
+  }
+
   if(!date||!name){showStatus('作業日と作業者名を入力してください。','err');return;}
-  if(!rows.length){showStatus('作業を1件以上入力してください。','err');return;}
+  if(!isAbsent&&!rows.length){showStatus('作業を1件以上入力してください。','err');return;}
   // 作業時間がある行は作業詳細・作業種別・進捗が必須
   for(let i=0;i<rows.length;i++){
     const r=rows[i];
@@ -713,7 +724,7 @@ async function saveReport(){
   }
   const wm=parseInt(document.getElementById('f-worktime').dataset.min)||0;
   const tm=parseInt(document.getElementById('total-time').dataset.min)||0;
-  if(wm!==tm){showStatus('実働時間と合計作業時間が一致していません。','err');return;}
+  if(!isAbsent&&wm!==tm){showStatus('実働時間と合計作業時間が一致していません。','err');return;}
   const btn=document.getElementById('btn-save');
   btn.disabled=true; showStatus('<span class="spinner"></span> 提出済み確認中...','ing');
   // SRDサマリー取得フローで提出済みチェック
@@ -741,7 +752,7 @@ async function saveReport(){
   const html=buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows);
   try{
     const res=await fetch(PA_SAVE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({date,name,note,checkin,checkout,kintai,breakMin,worktime,commute,lodging,rows,html})});
+      body:JSON.stringify({date,name,note,checkin:effectiveCheckin,checkout:effectiveCheckout,kintai,breakMin:effectiveBreakMin,worktime:effectiveWorktime,commute:effectiveCommute,lodging:effectiveLodging,rows,html})});
     if(res.ok||res.status===202){
       showStatus('✓ 保存成功。お疲れ様でした。','ok');
     }else showStatus('保存失敗（'+res.status+'）','err');
