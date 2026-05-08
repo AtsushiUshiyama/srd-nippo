@@ -26,7 +26,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .field label{display:block;font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
 .work-table textarea{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;resize:vertical;min-height:36px;line-height:1.4;box-sizing:border-box;}
 .work-table textarea:focus{border-color:var(--blue);}
-.field input,.field select{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;}
+.field input,.field select{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;height:36px;box-sizing:border-box;}
+.field select{padding:0 10px;}
 .field input:focus,.field select:focus{border-color:var(--border-focus);background:#fff;}
 .field input[readonly]{background:var(--surface2);color:var(--text-muted);cursor:default;}
 .check-field{display:flex;flex-direction:column;gap:6px;}
@@ -36,7 +37,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .check-label:hover{border-color:var(--border-focus);}
 .check-label input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
 .check-label.checked{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
-.time-btn{width:100%;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;}
+.time-btn{width:100%;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;height:36px;box-sizing:border-box;}
 .time-btn:hover{border-color:var(--border-focus);background:#fff;}
 .time-btn svg{opacity:.35;flex-shrink:0;width:13px;height:13px;}
 .clock-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
@@ -251,7 +252,12 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 ⑧移動：会社⇔現場の移動時間。ただし、宿⇔現場や、自宅⇔現場は通勤時間扱いなので移動時間に含めない。
 ⑨その他：いずれにも当てはまらない時。</span></span></th>
           <th class="th-detail"><span class="click-tip-wrap">作業詳細<span class="tooltip-icon">?</span><span class="tooltip-box">できるだけ詳細に記入する。
-作業種別が[移動]の場合は、移動手段を記入する。車の場合は社用車か便乗かも記載する。</span></span></th>
+作業種別が[移動]の場合
+　出発地→目的地 手段
+※往復時は⇔で表現
+例1)DYH⇔SRD 社用車
+例2)ﾃｰﾌﾞﾙﾏｰｸ魚沼→自宅 社用車
+例3)自宅→ﾌﾟﾛﾃﾘｱﾙ秋田 ﾀｸｼｰ→ﾓﾉﾚｰﾙ→飛行機→DYH車便乗</span></span></th>
           <th class="th-progress"><span class="tooltip-wrap">進捗<span class="tooltip-icon">?</span><span class="tooltip-box">いつも上司にどんなふうに進捗を聞かれているかを意識して下記のように記入する。自分の予想でいいので具体的な数値を記入する。
 机ハ：社長チェックまで後3日
 机ソ：ラダー骨組み完了まで後3日 画面はアドレス以外完了
