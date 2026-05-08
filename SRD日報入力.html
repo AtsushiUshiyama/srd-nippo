@@ -161,6 +161,15 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <div class="section-body">
       <div class="form-grid g5">
         <div class="field">
+          <label>勤務区分</label>
+          <select id="f-kintai" onchange="onKintaiChange()" style="font-family:var(--sans);font-size:14px;">
+            <option value="通常出勤">通常出勤</option>
+            <option value="休日出勤">休日出勤</option>
+            <option value="欠勤">欠勤</option>
+            <option value="休暇">休暇</option>
+          </select>
+        </div>
+        <div class="field">
           <label>出勤時刻</label>
           <button class="time-btn" onclick="openClock('checkin')">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -683,6 +692,7 @@ async function saveReport(){
   const note=document.getElementById('f-note').value.trim();
   const checkin=document.getElementById('f-checkin').value;
   const checkout=document.getElementById('f-checkout').value;
+  const kintai=document.getElementById('f-kintai').value;
   const breakMin=document.getElementById('f-break').value;
   const worktime=document.getElementById('f-worktime').value;
   const commute=document.getElementById('f-commute').checked;
@@ -731,7 +741,7 @@ async function saveReport(){
   const html=buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows);
   try{
     const res=await fetch(PA_SAVE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows,html})});
+      body:JSON.stringify({date,name,note,checkin,checkout,kintai,breakMin,worktime,commute,lodging,rows,html})});
     if(res.ok||res.status===202){
       showStatus('✓ 保存成功。お疲れ様でした。','ok');
     }else showStatus('保存失敗（'+res.status+'）','err');
