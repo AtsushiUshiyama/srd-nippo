@@ -331,7 +331,7 @@ function exportCsv(type){
   const f=getFiltered();
   let header,rows;
   if(type==='kintai'){
-    header='日付,作業者名,出勤,退勤,休憩(分),実働時間,通い出張手当,宿泊出張手当,備考';
+    header='日付,作業者名,勤務区分,出勤,退勤,休憩(分),実働時間,通い出張手当,宿泊出張手当,備考';
     rows=f.map(d=>[d.date,d.name,d.kintai||'通常出勤',d.checkin,d.checkout,d.breakMin,d.worktime,d.commute?'✓':'',d.lodging?'✓':'',d.note].map(csv).join(','));
   }else{
     header='作業日,作業者名,作業時間,製番,案件名,作業種別,作業詳細,進捗';
