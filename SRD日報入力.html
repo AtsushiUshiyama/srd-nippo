@@ -114,11 +114,14 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
   .header-sub{font-size:10px;}
   .section-header{padding:7px 12px;}
   .section-body{padding:10px 12px;}
-  .form-grid.g3{grid-template-columns:1fr 1fr;}
-  .form-grid.g5{grid-template-columns:1fr 1fr;}
+  .form-grid.g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .form-grid.g5{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
   .form-grid.g3 .field:nth-child(3){grid-column:1 / -1;}
   /* 勤務区分は全幅、出勤・退勤・休憩・実働は2列ペアで */
   .form-grid.g5 > .field:nth-child(1){grid-column:1 / -1;}
+  .field{min-width:0;overflow:hidden;}
+  .field label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .field .tooltip-wrap{max-width:100%;overflow:hidden;}
   .field input,.field select{font-size:16px;height:40px;}
   .time-btn{font-size:15px;height:40px;}
   .field label{font-size:11px;}
