@@ -116,8 +116,9 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
   .section-body{padding:10px 12px;}
   .form-grid.g3{grid-template-columns:1fr 1fr;}
   .form-grid.g5{grid-template-columns:1fr 1fr;}
-  .form-grid.g3 .field:nth-child(3),
-  .form-grid.g5 .field:nth-child(5){grid-column:1 / -1;}
+  .form-grid.g3 .field:nth-child(3){grid-column:1 / -1;}
+  /* 勤務区分は全幅、出勤・退勤・休憩・実働は2列ペアで */
+  .form-grid.g5 > .field:nth-child(1){grid-column:1 / -1;}
   .field input,.field select{font-size:16px;height:40px;}
   .time-btn{font-size:15px;height:40px;}
   .field label{font-size:11px;}
@@ -293,7 +294,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <button class="btn btn-secondary" onclick="resetForm()">リセット</button>
     <button class="btn btn-primary" id="btn-save" onclick="saveReport()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      SharePointに保存
+      保存
     </button>
     <div class="status" id="status"></div>
   </div>
