@@ -106,6 +106,26 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 .click-tip-box.active,.tooltip-box.active{display:block;}
 .click-tip-close{float:right;margin-left:10px;cursor:pointer;font-size:14px;line-height:1;color:#ccc;}
 .click-tip-close:hover{color:#fff;}
+@media (max-width: 600px){
+  .main{padding:14px 10px 60px;}
+  .header{padding:8px 12px;gap:8px;}
+  .header-logo{height:34px;width:34px;}
+  .header h1{font-size:14px;}
+  .header-sub{font-size:10px;}
+  .section-header{padding:7px 12px;}
+  .section-body{padding:10px 12px;}
+  .form-grid.g3{grid-template-columns:1fr 1fr;}
+  .form-grid.g5{grid-template-columns:1fr 1fr;}
+  .form-grid.g3 .field:nth-child(3),
+  .form-grid.g5 .field:nth-child(5){grid-column:1 / -1;}
+  .field input,.field select{font-size:16px;height:40px;}
+  .time-btn{font-size:15px;height:40px;}
+  .field label{font-size:11px;}
+  .btn{padding:10px 14px;font-size:14px;}
+  .work-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.work-table{min-width:760px;}
+  .match-status{margin-left:0;margin-top:6px;}
+}
 </style>
 </head>
 <body>
@@ -235,6 +255,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
       <span id="row-count" style="font-family:var(--mono);font-size:11px;color:var(--text-hint);margin-left:auto;">0 行</span>
     </div>
     <div class="section-body">
+      <div class="work-table-wrap">
       <table class="work-table">
         <thead><tr>
           <th class="th-dur">作業時間</th>
@@ -259,6 +280,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
         </tr></thead>
         <tbody id="work-tbody"></tbody>
       </table>
+      </div>
       <button class="add-row-btn" onclick="addRow()">＋ 作業を追加</button>
       <div class="summary-bar">
         <div class="summary-item">合計作業時間 <span class="summary-val" id="total-time">—</span></div>

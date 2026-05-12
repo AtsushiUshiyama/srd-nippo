@@ -60,6 +60,23 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 #error-msg{display:none;background:var(--red-bg);color:var(--red);border:1px solid #e8b4ae;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@media (max-width: 600px){
+  .main{padding:14px 10px 60px;}
+  .header{padding:8px 12px;gap:8px;}
+  .header-logo{height:34px;width:34px;}
+  .header h1{font-size:14px;}
+  .header-sub{font-size:10px;}
+  .filter-bar{padding:10px 12px;gap:8px;}
+  .filter-field{flex:1 1 calc(50% - 4px);min-width:0;}
+  .filter-field select,.filter-field input{font-size:15px;padding:9px 10px;}
+  .filter-actions{margin-left:0;width:100%;flex-wrap:wrap;justify-content:flex-start;}
+  .filter-actions .btn{flex:1 1 calc(33% - 6px);padding:9px 6px;font-size:13px;}
+  .section-header{padding:8px 12px;flex-wrap:wrap;}
+  .section-actions{margin-left:0;width:100%;margin-top:6px;}
+  .btn{padding:10px 12px;font-size:14px;}
+  table{min-width:900px;}
+  thead th, tbody td{padding:6px 8px;font-size:12px;}
+}
 </style>
 </head>
 <body>
@@ -331,7 +348,7 @@ function exportCsv(type){
   const f=getFiltered();
   let header,rows;
   if(type==='kintai'){
-    header='日付,作業者名,勤務区分,出勤,退勤,休憩(分),実働時間,通い出張手当,宿泊出張手当,備考';
+    header='日付,作業者名,出勤,退勤,休憩(分),実働時間,通い出張手当,宿泊出張手当,備考';
     rows=f.map(d=>[d.date,d.name,d.kintai||'通常出勤',d.checkin,d.checkout,d.breakMin,d.worktime,d.commute?'✓':'',d.lodging?'✓':'',d.note].map(csv).join(','));
   }else{
     header='作業日,作業者名,作業時間,製番,案件名,作業種別,作業詳細,進捗';
