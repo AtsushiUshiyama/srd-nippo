@@ -18,16 +18,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
 .section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
 .section-body{padding:16px 18px;}
-.section-body.disabled-section{opacity:.4;pointer-events:none;filter:grayscale(.4);}
-.field.disabled-field,.check-field.disabled-field{opacity:.4;pointer-events:none;filter:grayscale(.4);}
 .form-grid{display:grid;gap:14px;}
 .g3{grid-template-columns:160px 180px 1fr;}
 .g5{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;}
 .field label{display:block;font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
 .work-table textarea{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;resize:vertical;min-height:36px;line-height:1.4;box-sizing:border-box;}
 .work-table textarea:focus{border-color:var(--blue);}
-.field input,.field select{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;height:36px;box-sizing:border-box;}
-.field select{padding:0 10px;}
+.field input,.field select{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;}
 .field input:focus,.field select:focus{border-color:var(--border-focus);background:#fff;}
 .field input[readonly]{background:var(--surface2);color:var(--text-muted);cursor:default;}
 .check-field{display:flex;flex-direction:column;gap:6px;}
@@ -37,7 +34,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .check-label:hover{border-color:var(--border-focus);}
 .check-label input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
 .check-label.checked{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
-.time-btn{width:100%;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;height:36px;box-sizing:border-box;}
+.time-btn{width:100%;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;}
 .time-btn:hover{border-color:var(--border-focus);background:#fff;}
 .time-btn svg{opacity:.35;flex-shrink:0;width:13px;height:13px;}
 .clock-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
@@ -172,7 +169,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
             <option value="休暇">休暇</option>
           </select>
         </div>
-        <div class="field" data-kintai-target>
+        <div class="field">
           <label>出勤時刻</label>
           <button class="time-btn" onclick="openClock('checkin')">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -180,7 +177,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
           </button>
           <input type="hidden" id="f-checkin" value="09:00">
         </div>
-        <div class="field" data-kintai-target>
+        <div class="field">
           <label>退勤時刻</label>
           <button class="time-btn" onclick="openClock('checkout')">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -188,7 +185,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
           </button>
           <input type="hidden" id="f-checkout" value="18:00">
         </div>
-        <div class="field" data-kintai-target>
+        <div class="field">
           <label><span class="tooltip-wrap">休憩時間（分）<span class="tooltip-icon">?</span><span class="tooltip-box">サンリツ社内作業時の休憩時間は下記の90分
 10:30〜10:40
 12:00〜13:00
@@ -197,11 +194,11 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 現場などで休憩時間が異なる時は修正して下さい。</span></span></label>
           <input type="number" id="f-break" value="90" min="0" max="480" step="5" oninput="calcWorkTime()" style="font-family:var(--mono);">
         </div>
-        <div class="field" data-kintai-target>
+        <div class="field">
           <label>実働時間</label>
           <input type="text" id="f-worktime" readonly placeholder="自動計算">
         </div>
-        <div class="check-field" data-kintai-target>
+        <div class="check-field">
           <label class="top">手当</label>
           <div class="check-row">
             <div style="display:flex;align-items:center;gap:4px;">
@@ -232,7 +229,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
       </div>
     </div>
   </div>
-  <div class="section" id="work-section">
+  <div class="section">
     <div class="section-header">
       <span class="section-label">作業明細</span>
       <span id="row-count" style="font-family:var(--mono);font-size:11px;color:var(--text-hint);margin-left:auto;">0 行</span>
@@ -252,12 +249,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 ⑧移動：会社⇔現場の移動時間。ただし、宿⇔現場や、自宅⇔現場は通勤時間扱いなので移動時間に含めない。
 ⑨その他：いずれにも当てはまらない時。</span></span></th>
           <th class="th-detail"><span class="click-tip-wrap">作業詳細<span class="tooltip-icon">?</span><span class="tooltip-box">できるだけ詳細に記入する。
-作業種別が[移動]の場合
-　出発地→目的地 手段
-※往復時は⇔で表現
-例1)DYH⇔SRD 社用車
-例2)ﾃｰﾌﾞﾙﾏｰｸ魚沼→自宅 社用車
-例3)自宅→ﾌﾟﾛﾃﾘｱﾙ秋田 ﾀｸｼｰ→ﾓﾉﾚｰﾙ→飛行機→DYH車便乗</span></span></th>
+作業種別が[移動]の場合は、移動手段を記入する。車の場合は社用車か便乗かも記載する。</span></span></th>
           <th class="th-progress"><span class="tooltip-wrap">進捗<span class="tooltip-icon">?</span><span class="tooltip-box">いつも上司にどんなふうに進捗を聞かれているかを意識して下記のように記入する。自分の予想でいいので具体的な数値を記入する。
 机ハ：社長チェックまで後3日
 机ソ：ラダー骨組み完了まで後3日 画面はアドレス以外完了
@@ -429,7 +421,6 @@ window.onload=async()=>{
   if(savedBreak){document.getElementById('f-break').value=savedBreak;}
   if(savedKintai){document.getElementById('f-kintai').value=savedKintai;}
   calcWorkTime();
-  onKintaiChange();
   await fetchUserName();
 
   // URLパラメータで日付・名前が渡された場合はデータ読み込みモード
@@ -475,10 +466,6 @@ async function loadExistingData(date, name){
     const nameEl=document.getElementById('f-name');
     [...nameEl.options].forEach(o=>{if(o.value===name)o.selected=true;});
     document.getElementById('f-note').value=map['備考']||'';
-    // 勤務区分セット（SharePointリスト列を優先、なければHTMLから）
-    const kintaiVal=item.kintai||item['kintai']||map['勤務区分']||'通常出勤';
-    const kSel=document.getElementById('f-kintai');
-    if([...kSel.options].some(o=>o.value===kintaiVal))kSel.value=kintaiVal;
     // 勤怠情報セット
     const checkin=(map['出勤']||'09:00');
     const checkout=(map['退勤']||'18:00');
@@ -513,7 +500,6 @@ async function loadExistingData(date, name){
     }
     if(document.querySelectorAll('.work-row').length===0){addRow();addRow();addRow();}
     updateRowCount();
-    onKintaiChange();
     // 編集モード表示
     document.title='SRD日報入力（編集）';
     document.querySelector('.header h1').textContent='SRD日報入力（編集）';
@@ -596,27 +582,6 @@ function calcWorkTime(){
 }
 function mToStr(m){return Math.floor(m/60)+'h '+(m%60)+'m';}
 
-function onKintaiChange(){
-  const kintai=document.getElementById('f-kintai').value;
-  const isAbsent=kintai==='欠勤'||kintai==='休暇';
-  // 勤怠情報セクション内の勤務区分以外のフィールドをdisable
-  document.querySelectorAll('[data-kintai-target]').forEach(el=>{
-    el.classList.toggle('disabled-field',isAbsent);
-  });
-  // 作業明細セクション全体をdisable
-  const ws=document.getElementById('work-section');
-  if(ws){
-    const body=ws.querySelector('.section-body');
-    if(body)body.classList.toggle('disabled-section',isAbsent);
-  }
-  // 合計と一致状態の表示をクリア（欠勤時は不要）
-  if(isAbsent){
-    document.getElementById('match-status').textContent='';
-  }else{
-    checkMatch();
-  }
-}
-
 function addRow(durMin,seiban,kojimei,type,detail,progress){
   durMin=parseInt(durMin)||0; seiban=seiban||''; kojimei=kojimei||''; type=type||''; detail=detail||''; progress=progress||'';
   const id=++rowId;
@@ -680,13 +645,12 @@ function checkMatch(){
   const el=document.getElementById('match-status');
   if(!wm||!tm){el.innerHTML='';return;}
   if(wm===tm)el.innerHTML='<span class="badge badge-ok">✓ 実働時間と一致</span>';
-  else{const d=tm-wm;el.innerHTML='<span class="badge badge-ng">✗ '+(d>0?'+':'')+d+'分のずれ</span>';}
+  else{const d=tm-wm;const sign=d>0?'+':'-';const abs=Math.abs(d);el.innerHTML='<span class="badge badge-ng">✗ '+sign+mToStr(abs)+'のずれ</span>';}
 }
 function t2m(t){if(!t)return 0;const[h,m]=t.split(':').map(Number);return h*60+m;}
 
-function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows,kintai){
+function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows){
   const chk=v=>v?'✓':'－';
-  const isAbsent=kintai==='欠勤'||kintai==='休暇';
   const rowsHtml=rows.map(r=>
     `<tr>
       <td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${r.duration||'—'}</td>
@@ -697,8 +661,19 @@ function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commu
       <td style="padding:6px 10px;border:1px solid #ddd;">${r.progress||'—'}</td>
     </tr>`).join('');
   const noteRow=note?`<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">備考</td><td colspan="3" style="padding:6px 10px;border:1px solid #ddd;">${note}</td></tr>`:'';
-  const kintaiRow=`<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">勤務区分</td><td colspan="3" style="padding:6px 10px;border:1px solid #ddd;">${kintai||'通常出勤'}</td></tr>`;
-  const detailHtml=isAbsent?'':`<table style="width:100%;border-collapse:collapse;">
+  return `<div style="font-family:sans-serif;max-width:900px;color:#1a1a1a;">
+<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業日</td><td style="padding:6px 10px;border:1px solid #ddd;">${date}</td>
+    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業者名</td><td style="padding:6px 10px;border:1px solid #ddd;">${name}</td></tr>
+<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">出勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkin}</td>
+    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">退勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkout}</td></tr>
+<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">休憩</td><td style="padding:6px 10px;border:1px solid #ddd;">${breakMin}分</td>
+    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">実働時間</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${worktime}</td></tr>
+<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">通い出張手当</td><td style="padding:6px 10px;border:1px solid #ddd;">${chk(commute)}</td>
+    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">宿泊出張手当</td><td style="padding:6px 10px;border:1px solid #ddd;">${chk(lodging)}</td></tr>
+${noteRow}
+</table>
+<table style="width:100%;border-collapse:collapse;">
 <thead><tr style="background:#1a3a5c;color:#fff;">
 <th style="padding:8px 10px;border:1px solid #1a3a5c;text-align:left;width:90px;">作業時間</th>
 <th style="padding:8px 10px;border:1px solid #1a3a5c;text-align:left;width:70px;">製番</th>
@@ -708,21 +683,7 @@ function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commu
 <th style="padding:8px 10px;border:1px solid #1a3a5c;text-align:left;width:130px;">進捗</th>
 </tr></thead>
 <tbody>${rowsHtml}</tbody>
-</table>`;
-  return `<div style="font-family:sans-serif;max-width:900px;color:#1a1a1a;">
-<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業日</td><td style="padding:6px 10px;border:1px solid #ddd;">${date}</td>
-    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業者名</td><td style="padding:6px 10px;border:1px solid #ddd;">${name}</td></tr>
-${kintaiRow}
-<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">出勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkin||'—'}</td>
-    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">退勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkout||'—'}</td></tr>
-<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">休憩</td><td style="padding:6px 10px;border:1px solid #ddd;">${breakMin?breakMin+'分':'—'}</td>
-    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">実働時間</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${worktime||'—'}</td></tr>
-<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">通い出張手当</td><td style="padding:6px 10px;border:1px solid #ddd;">${chk(commute)}</td>
-    <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">宿泊出張手当</td><td style="padding:6px 10px;border:1px solid #ddd;">${chk(lodging)}</td></tr>
-${noteRow}
-</table>
-${detailHtml}</div>`;
+</table></div>`;
 }
 
 async function saveReport(){
@@ -739,12 +700,11 @@ async function saveReport(){
   let rows=collectRows();
 
   // 欠勤・休暇の場合は勤怠・作業明細をすべて空にする
-  // ※Power Automate側でint()変換が走る列があるため、breakMinは'0'を送る
   const isAbsent=kintai==='欠勤'||kintai==='休暇';
   let effectiveCheckin=checkin, effectiveCheckout=checkout, effectiveBreakMin=breakMin;
   let effectiveWorktime=worktime, effectiveCommute=commute, effectiveLodging=lodging;
   if(isAbsent){
-    effectiveCheckin=''; effectiveCheckout=''; effectiveBreakMin='0';
+    effectiveCheckin=''; effectiveCheckout=''; effectiveBreakMin='';
     effectiveWorktime=''; effectiveCommute=false; effectiveLodging=false;
     rows=[];
   }
@@ -789,7 +749,7 @@ async function saveReport(){
     }
   }catch(e){/* チェック失敗は無視して続行 */}
   showStatus('<span class="spinner"></span> 保存中...','ing');
-  const html=buildReportHtml(date,name,note,effectiveCheckin,effectiveCheckout,effectiveBreakMin,effectiveWorktime,effectiveCommute,effectiveLodging,rows,kintai);
+  const html=buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows);
   try{
     const res=await fetch(PA_SAVE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date,name,note,checkin:effectiveCheckin,checkout:effectiveCheckout,kintai,breakMin:effectiveBreakMin,worktime:effectiveWorktime,commute:effectiveCommute,lodging:effectiveLodging,rows,html})});
@@ -829,11 +789,9 @@ function resetForm(){
   document.getElementById('f-checkout').value='18:00'; document.getElementById('val-checkout').textContent='18:00';
   document.getElementById('f-break').value='90';
   ['commute','lodging'].forEach(k=>{document.getElementById('f-'+k).checked=false;document.getElementById('lbl-'+k).classList.remove('checked');});
-  document.getElementById('f-kintai').value='通常出勤';
   document.getElementById('work-tbody').innerHTML=''; rowId=0;
   document.getElementById('status').classList.remove('show');
   calcWorkTime(); addRow(); addRow(); addRow(); updateRowCount();
-  onKintaiChange();
 }
 
 </script>
