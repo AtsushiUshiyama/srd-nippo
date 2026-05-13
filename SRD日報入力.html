@@ -841,7 +841,6 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.click-tip-box.active,.tooltip-box.active').forEach(b => { if(b!==box) b.classList.remove('active'); });
     box.classList.toggle('active');
     if (box.classList.contains('active')) {
-      const r = icon.getBoundingClientRect();
       // 閉じるボタンを追加（まだなければ）
       if (!box.querySelector('.click-tip-close')) {
         const cl = document.createElement('span');
@@ -849,10 +848,29 @@ document.addEventListener('click', e => {
         cl.textContent = '✕';
         box.prepend(cl);
       }
-      const bw = 480;
-      box.style.left = Math.min(r.left, window.innerWidth - bw - 10) + 'px';
-      box.style.top = (r.top - box.scrollHeight - 8) + 'px';
-      if (r.top - box.scrollHeight - 8 < 0) box.style.top = (r.bottom + 8) + 'px';
+      if (window.innerWidth <= 600) {
+        // スマホ：CSSの中央配置に任せる（style属性をクリア）
+        box.style.left = '';
+        box.style.top = '';
+        box.style.right = '';
+      } else {
+        // PC：アイコン付近に配置（画面内に収める）
+        const r = icon.getBoundingClientRect();
+        const bw = box.offsetWidth || 480;
+        const bh = box.offsetHeight || 200;
+        const margin = 10;
+        // 横位置：アイコンの真下/真上、右端がはみ出さないように
+        let left = r.left;
+        if (left + bw + margin > window.innerWidth) left = window.innerWidth - bw - margin;
+        if (left < margin) left = margin;
+        box.style.left = left + 'px';
+        box.style.right = 'auto';
+        // 縦位置：アイコンの上に出す、はみ出すなら下に
+        let top = r.top - bh - 8;
+        if (top < margin) top = r.bottom + 8;
+        if (top + bh + margin > window.innerHeight) top = window.innerHeight - bh - margin;
+        box.style.top = top + 'px';
+      }
     }
     return;
   }
