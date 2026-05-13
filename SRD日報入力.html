@@ -854,20 +854,30 @@ document.addEventListener('click', e => {
         box.style.top = '';
         box.style.right = '';
       } else {
-        // PC：アイコン付近に配置（画面内に収める）
+        // PC：アイコン付近に配置（下優先）
         const r = icon.getBoundingClientRect();
         const bw = box.offsetWidth || 480;
         const bh = box.offsetHeight || 200;
         const margin = 10;
-        // 横位置：アイコンの真下/真上、右端がはみ出さないように
+        // 横位置：アイコンの左端を基準、右端がはみ出すなら左にずらす
         let left = r.left;
         if (left + bw + margin > window.innerWidth) left = window.innerWidth - bw - margin;
         if (left < margin) left = margin;
         box.style.left = left + 'px';
         box.style.right = 'auto';
-        // 縦位置：アイコンの上に出す、はみ出すなら下に
-        let top = r.top - bh - 8;
-        if (top < margin) top = r.bottom + 8;
+        // 縦位置：基本はアイコンの下、画面下端からはみ出して、かつ上に余裕があるなら上に
+        const spaceBelow = window.innerHeight - r.bottom - margin;
+        const spaceAbove = r.top - margin;
+        let top;
+        if (spaceBelow >= bh || spaceBelow >= spaceAbove) {
+          // 下に出す（下の余裕が十分、または下の方が上より広い）
+          top = r.bottom + 8;
+        } else {
+          // 上に出す
+          top = r.top - bh - 8;
+        }
+        // それでも画面外に行くなら端に寄せる
+        if (top < margin) top = margin;
         if (top + bh + margin > window.innerHeight) top = window.innerHeight - bh - margin;
         box.style.top = top + 'px';
       }
