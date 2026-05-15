@@ -786,6 +786,13 @@ async function saveReport(){
       body:JSON.stringify({date,name,note,checkin:effectiveCheckin,checkout:effectiveCheckout,kintai,breakMin:effectiveBreakMin,worktime:effectiveWorktime,commute:effectiveCommute,lodging:effectiveLodging,rows,html})});
     if(res.ok||res.status===202){
       showStatus('✓ 保存成功。お疲れ様でした。','ok');
+      // 次回起動時の復元用：通常/休日出勤の時のみ値を記憶
+      if(!isAbsent){
+        localStorage.setItem('dr-checkin',checkin);
+        localStorage.setItem('dr-checkout',checkout);
+        localStorage.setItem('dr-break',breakMin);
+        localStorage.setItem('dr-kintai',kintai);
+      }
     }else showStatus('保存失敗（'+res.status+'）','err');
   }catch(e){showStatus('接続失敗: '+e.message,'err');}
   btn.disabled=false;
