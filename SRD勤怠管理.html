@@ -370,6 +370,7 @@ function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
 
 // MFクラウド勤怠 日次勤怠データインポート用 CSV出力
 // 従業員マスタ：日報上の表示名（苗字+名前を空白なしで連結）でマッチ
+// dispName が指定されている場合はそれも候補として照合する
 const MF_EMPLOYEES=[
   {no:'004',sei:'藤原',mei:'博文'},
   {no:'005',sei:'岡本',mei:'秀子'},
@@ -377,7 +378,7 @@ const MF_EMPLOYEES=[
   {no:'010',sei:'妹尾',mei:'恵吾'},
   {no:'011',sei:'杉本',mei:'裕樹'},
   {no:'012',sei:'徳留電機',mei:'製作所'},
-  {no:'014',sei:'グエンドゥック',mei:'アイン'},
+  {no:'014',sei:'グエンドゥック',mei:'アイン',dispName:'アイン'},
   {no:'015',sei:'吉本',mei:'翔太'},
   {no:'018',sei:'増田',mei:'大将'},
   {no:'020',sei:'田里',mei:'絵美'},
@@ -387,7 +388,7 @@ const MF_EMPLOYEES=[
 function findMfEmployee(name){
   if(!name)return null;
   const key=name.replace(/[\s　]/g,'');
-  return MF_EMPLOYEES.find(e=>(e.sei+e.mei)===key)||null;
+  return MF_EMPLOYEES.find(e=>(e.sei+e.mei)===key||(e.dispName&&e.dispName.replace(/[\s　]/g,'')===key))||null;
 }
 function exportMfKintaiCsv(){
   const f=getFiltered();
@@ -440,23 +441,29 @@ function exportMfKeihiCsv(){
     const ymd=d.date.replace(/-/g,'/');
     // 通い出張手当
     if(d.commute){
-      rows.push([ymd,d.name,'出張手当',500,'','','','','','','','','','JPY',1,'','',''].map(csv).join(','));
+      rows.push([ymd,d.name,'出張手当','500','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
     }
     // 宿泊出張手当
     if(d.lodging){
-      rows.push([ymd,d.name,'出張手当',3000,'','','','','','','','','','JPY',1,'','',''].map(csv).join(','));
+      rows.push([ymd,d.name,'出張手当','3000','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
     }
   }
   if(!rows.length){alert('出力対象データがありません。');return;}
   const blob=new Blob(['\uFEFF'+[header,...rows].join('\r\n')],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
   // ファイル名は期間＋作業者入り
   const from=(document.getElementById('filter-from').value||'').replace(/-/g,'');
   const to=(document.getElementById('filter-to').value||'').replace(/-/g,'');
   const periodPart=(from&&to)?('_'+from+'-'+to):'';
   const name=document.getElementById('filter-name').value||'';
   const namePart=name?('_'+name.replace(/[\s　]/g,'')):'_全員';
-  a.download='MF経費'+periodPart+namePart+'.csv';a.click();
+  a.download='MF経費'+periodPart+namePart+'.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
