@@ -75,6 +75,12 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   .btn{padding:10px 12px;font-size:14px;}
   table{min-width:900px;}
   thead th, tbody td{padding:6px 8px;font-size:12px;}
+  /* 作業明細一覧テーブル：作業詳細・進捗を案件名と同じ幅に拡張 */
+  #sagyou-table{min-width:1300px;}
+  #sagyou-table thead th:nth-child(7),
+  #sagyou-table thead th:nth-child(8),
+  #sagyou-table tbody td:nth-child(7),
+  #sagyou-table tbody td:nth-child(8){min-width:300px;width:300px;}
 }
 </style>
 </head>
@@ -140,7 +146,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
         レポートCSV出力
       </button></div>
     </div>
-    <div class="table-wrap"><table>
+    <div class="table-wrap"><table id="sagyou-table">
       <thead><tr><th class="sortable" style="width:100px" onclick="sortBy('date')">作業日</th><th class="sortable" style="width:100px" onclick="sortBy('name')">作業者名</th><th style="width:100px">作業時間</th><th style="width:100px">製番</th><th style="width:300px">案件名</th><th style="width:100px">作業種別</th><th style="width:50%">作業詳細</th><th style="width:50%">進捗</th></tr></thead>
       <tbody id="sagyou-tbody"><tr><td colspan="8" class="empty-cell">読み込み中...</td></tr></tbody>
     </table></div>
