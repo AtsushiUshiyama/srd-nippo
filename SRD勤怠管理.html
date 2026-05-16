@@ -441,11 +441,11 @@ function exportMfKeihiCsv(){
     const ymd=d.date.replace(/-/g,'/');
     // 通い出張手当
     if(d.commute){
-      rows.push([ymd,d.name,'出張手当','500','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
+      rows.push([ymd,d.name+' 通い出張手当','出張手当','500','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
     }
     // 宿泊出張手当
     if(d.lodging){
-      rows.push([ymd,d.name,'出張手当','3000','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
+      rows.push([ymd,d.name+' 宿泊出張手当','出張手当','3000','','','','','','','','','','JPY','1','','',''].map(csv).join(','));
     }
   }
   if(!rows.length){alert('出力対象データがありません。');return;}
