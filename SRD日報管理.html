@@ -138,10 +138,6 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-green" id="btn-report-csv" disabled onclick="exportReportCsv()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         レポートCSV出力
-      </button>
-      <button class="btn btn-green" onclick="exportMfKeihiCsv()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        MF経費CSV
       </button></div>
     </div>
     <div class="table-wrap"><table>
@@ -577,42 +573,6 @@ function exportReportCsv(){
   const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='レポート_製番'+seibanPadded+'.csv';a.click();
-}
-
-// MFクラウド経費 インポート用 CSV出力
-// 通い出張手当（500円/日）と宿泊出張手当（3,000円/泊）を別行で出力
-function exportMfKeihiCsv(){
-  const f=getFiltered();
-  const header='日付,支払先・内容,経費科目,金額（税込）,自社出席代表者名,自社出席者人数,他社出席代表者名,他社出席者人数,メモ,費用負担部門名,費用負担部門コード,プロジェクト名,税区分,通貨,為替レート,貸方勘定科目,貸方補助科目,事前申請番号';
-  const rows=[];
-  for(const d of f){
-    // 欠勤・休暇はスキップ
-    if(d.kintai==='欠勤'||d.kintai==='休暇')continue;
-    if(!d.commute&&!d.lodging)continue;
-    // 日付を yyyy/MM/dd に変換
-    const ymd=d.date.replace(/-/g,'/');
-    // メモ：その日の最初の作業の製番・案件名
-    const firstRow=(d.rows&&d.rows.length)?d.rows[0]:null;
-    const memo=firstRow?[firstRow.seiban||'',firstRow.kojimei||''].filter(v=>v).join(' '):'';
-    // 通い出張手当
-    if(d.commute){
-      rows.push([ymd,d.name,'出張手当',500,'','','','',memo,'','','','','JPY',1,'','',''].map(csv).join(','));
-    }
-    // 宿泊出張手当
-    if(d.lodging){
-      rows.push([ymd,d.name,'出張手当',3000,'','','','',memo,'','','','','JPY',1,'','',''].map(csv).join(','));
-    }
-  }
-  if(!rows.length){alert('出力対象データがありません。');return;}
-  const blob=new Blob(['\uFEFF'+[header,...rows].join('\r\n')],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  // ファイル名は期間＋作業者入り
-  const from=(document.getElementById('filter-from').value||'').replace(/-/g,'');
-  const to=(document.getElementById('filter-to').value||'').replace(/-/g,'');
-  const periodPart=(from&&to)?('_'+from+'-'+to):'';
-  const name=document.getElementById('filter-name').value||'';
-  const namePart=name?('_'+name.replace(/[\s　]/g,'')):'_全員';
-  a.download='MF経費'+periodPart+namePart+'.csv';a.click();
 }
 function csv(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
