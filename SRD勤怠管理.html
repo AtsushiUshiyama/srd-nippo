@@ -114,6 +114,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="section">
     <div class="section-header">
       <span class="section-label">勤怠一覧</span>
+      <span id="missing-members" style="font-size:11px;color:var(--red);margin-left:8px;"></span>
       <div class="section-actions">
         <button class="btn btn-edit" id="btn-edit" disabled onclick="openEdit()">✏️ 編集</button>
         <button class="btn btn-green" onclick="exportCsv('kintai')">
@@ -294,8 +295,25 @@ function sortBy(key){
 function renderAll(){
   const f=getFiltered();
   document.getElementById('result-count').textContent=f.length+'件';
+  updateMissingMembers(f);
   if(document.getElementById('kintai-tbody'))renderKintai(f);
   if(document.getElementById('sagyou-tbody'))renderSagyou(f);
+}
+
+// 作業者フィルター＝全員の時、表示中の期間に勤怠データが1件もないメンバーを表示
+function updateMissingMembers(f){
+  const el=document.getElementById('missing-members');
+  if(!el)return;
+  const nameFilter=document.getElementById('filter-name').value;
+  if(nameFilter){el.textContent='';return;}
+  // 作業者プルダウンの全option（先頭の「全員」は除く）
+  const sel=document.getElementById('filter-name');
+  const all=[...sel.options].map(o=>o.value).filter(v=>v);
+  if(!all.length){el.textContent='';return;}
+  // 表示中データに含まれる作業者集合
+  const present=new Set(f.map(d=>d.name).filter(Boolean));
+  const missing=all.filter(n=>!present.has(n));
+  el.textContent=missing.length?('未提出：'+missing.join('、')):'';
 }
 
 function renderKintai(data){
