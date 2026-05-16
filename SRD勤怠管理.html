@@ -301,6 +301,8 @@ function renderAll(){
 }
 
 // 作業者フィルター＝全員の時、表示中の期間に勤怠データが1件もないメンバーを表示
+// 退職者は除外する
+const MISSING_EXCLUDE=['松田','桐山'];
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
   if(!el)return;
@@ -312,7 +314,7 @@ function updateMissingMembers(f){
   if(!all.length){el.textContent='';return;}
   // 表示中データに含まれる作業者集合
   const present=new Set(f.map(d=>d.name).filter(Boolean));
-  const missing=all.filter(n=>!present.has(n));
+  const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex)));
   el.textContent=missing.length?('未提出：'+missing.join('、')):'';
 }
 
