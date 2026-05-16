@@ -31,6 +31,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
 .section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
 .section-actions{margin-left:auto;}
+.missing-badge{display:inline-block;background:#fdecea;color:#c0392b;border:1px solid #f5c6c1;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;margin-right:4px;white-space:nowrap;}
+.missing-label{color:var(--text-muted);font-size:11px;font-weight:600;margin-right:4px;}
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
 td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-all;}
@@ -114,7 +116,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="section">
     <div class="section-header">
       <span class="section-label">勤怠一覧</span>
-      <span id="missing-members" style="font-size:11px;color:var(--red);margin-left:8px;"></span>
+      <span id="missing-members" style="margin-left:8px;"></span>
       <div class="section-actions">
         <button class="btn btn-edit" id="btn-edit" disabled onclick="openEdit()">✏️ 編集</button>
         <button class="btn btn-green" onclick="exportCsv('kintai')">
@@ -307,15 +309,17 @@ function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
   if(!el)return;
   const nameFilter=document.getElementById('filter-name').value;
-  if(nameFilter){el.textContent='';return;}
+  if(nameFilter){el.innerHTML='';return;}
   // 作業者プルダウンの全option（先頭の「全員」は除く）
   const sel=document.getElementById('filter-name');
   const all=[...sel.options].map(o=>o.value).filter(v=>v);
-  if(!all.length){el.textContent='';return;}
+  if(!all.length){el.innerHTML='';return;}
   // 表示中データに含まれる作業者集合
   const present=new Set(f.map(d=>d.name).filter(Boolean));
   const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex)));
-  el.textContent=missing.length?('未提出：'+missing.join('、')):'';
+  if(!missing.length){el.innerHTML='';return;}
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>'<span class="missing-badge">'+esc(n)+'</span>').join('');
 }
 
 function renderKintai(data){
