@@ -100,6 +100,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
       <button class="btn btn-secondary" onclick="setPeriod('1m')">直近1か月</button>
+      <button class="btn btn-secondary" onclick="setPeriod('shime')">締め</button>
       <button class="btn btn-secondary" onclick="filterDay(0)">本日</button>
       <button class="btn btn-secondary" onclick="filterDay(1)">昨日</button>
       <button class="btn btn-secondary" onclick="filterDay(2)">2日前</button>
@@ -617,6 +618,13 @@ function setPeriod(period){
   }else if(period==='1m'){
     const d=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
     from=fmt(d);
+  }else if(period==='shime'){
+    // 常に前月16日〜当月15日
+    const fromD=new Date(today.getFullYear(),today.getMonth()-1,16);
+    const toD=new Date(today.getFullYear(),today.getMonth(),15);
+    document.getElementById('filter-from').value=fmt(fromD);
+    document.getElementById('filter-to').value=fmt(toD);
+    return;
   }
   document.getElementById('filter-from').value=from;
   document.getElementById('filter-to').value=fmt(today);
