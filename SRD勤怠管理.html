@@ -119,6 +119,10 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
         <button class="btn btn-green" onclick="exportCsv('kintai')">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         CSV出力
+      </button>
+      <button class="btn btn-green" onclick="exportMfKintaiCsv()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        MF勤怠CSV
       </button></div>
     </div>
     <div class="table-wrap"><table>
@@ -359,6 +363,62 @@ function exportCsv(type){
   a.download=(type==='kintai'?'勤怠一覧':'作業明細一覧')+'.csv';a.click();
 }
 function csv(v){return '"'+(v||'').replace(/"/g,'""')+'"';}
+
+// MFクラウド勤怠 日次勤怠データインポート用 CSV出力
+// 従業員マスタ：日報上の表示名（苗字+名前を空白なしで連結）でマッチ
+const MF_EMPLOYEES=[
+  {no:'004',sei:'藤原',mei:'博文'},
+  {no:'005',sei:'岡本',mei:'秀子'},
+  {no:'006',sei:'井折',mei:'顕太郎'},
+  {no:'010',sei:'妹尾',mei:'恵吾'},
+  {no:'011',sei:'杉本',mei:'裕樹'},
+  {no:'012',sei:'徳留電機',mei:'製作所'},
+  {no:'014',sei:'グエンドゥック',mei:'アイン'},
+  {no:'015',sei:'吉本',mei:'翔太'},
+  {no:'018',sei:'増田',mei:'大将'},
+  {no:'020',sei:'田里',mei:'絵美'},
+  {no:'022',sei:'永井',mei:'遼'},
+  {no:'023',sei:'松下',mei:'歩美'}
+];
+function findMfEmployee(name){
+  if(!name)return null;
+  const key=name.replace(/[\s　]/g,'');
+  return MF_EMPLOYEES.find(e=>(e.sei+e.mei)===key)||null;
+}
+function exportMfKintaiCsv(){
+  const f=getFiltered();
+  const header='従業員番号,苗字,名前,打刻所属日,打刻日,打刻時刻,打刻種別';
+  const rows=[];
+  const unmatched=new Set();
+  for(const d of f){
+    // 欠勤・休暇はスキップ
+    if(d.kintai==='欠勤'||d.kintai==='休暇')continue;
+    // 出勤・退勤どちらもない日はスキップ
+    if(!d.checkin&&!d.checkout)continue;
+    const emp=findMfEmployee(d.name);
+    if(!emp){unmatched.add(d.name);continue;}
+    // 日付を yyyy/MM/dd に変換（d.dateは yyyy-MM-dd 形式）
+    const ymd=d.date.replace(/-/g,'/');
+    if(d.checkin){
+      rows.push([emp.no,emp.sei,emp.mei,ymd,ymd,d.checkin,'出勤'].map(csv).join(','));
+    }
+    if(d.checkout){
+      rows.push([emp.no,emp.sei,emp.mei,ymd,ymd,d.checkout,'退勤'].map(csv).join(','));
+    }
+  }
+  if(unmatched.size){
+    console.warn('MF勤怠CSV: マスタ未登録のためスキップした作業者:',[...unmatched].join(', '));
+    alert('以下の作業者はMF勤怠マスタに未登録のため出力されません：\n'+[...unmatched].join('、'));
+  }
+  if(!rows.length){alert('出力対象データがありません。');return;}
+  const blob=new Blob(['\uFEFF'+[header,...rows].join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  // ファイル名は期間入り
+  const from=(document.getElementById('filter-from').value||'').replace(/-/g,'');
+  const to=(document.getElementById('filter-to').value||'').replace(/-/g,'');
+  const suffix=(from&&to)?('_'+from+'-'+to):'';
+  a.download='MF勤怠'+suffix+'.csv';a.click();
+}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
 function fmtDate(d){
