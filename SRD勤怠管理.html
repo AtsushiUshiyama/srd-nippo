@@ -413,11 +413,13 @@ function exportMfKintaiCsv(){
   if(!rows.length){alert('出力対象データがありません。');return;}
   const blob=new Blob(['\uFEFF'+[header,...rows].join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  // ファイル名は期間入り
+  // ファイル名は期間＋作業者入り
   const from=(document.getElementById('filter-from').value||'').replace(/-/g,'');
   const to=(document.getElementById('filter-to').value||'').replace(/-/g,'');
-  const suffix=(from&&to)?('_'+from+'-'+to):'';
-  a.download='MF勤怠'+suffix+'.csv';a.click();
+  const periodPart=(from&&to)?('_'+from+'-'+to):'';
+  const name=document.getElementById('filter-name').value||'';
+  const namePart=name?('_'+name.replace(/[\s　]/g,'')):'_全員';
+  a.download='MF勤怠'+periodPart+namePart+'.csv';a.click();
 }
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
