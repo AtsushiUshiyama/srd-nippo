@@ -685,6 +685,30 @@ function onSeibanInput(el){
 // 製番一覧モーダル
 let seibanModalTargetRid=null; // 検索ボタンを押した行のID
 let seibanModalAllItems=[];     // 取得した全案件名（重複排除済）
+// HTMLパース用ユーティリティ（日報サマリーの content からの抽出）
+const HTML_ENT={'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&#39;':"'"};
+function decodeHtmlEntities(str){return str.replace(/&(?:amp|lt|gt|quot|#39);/g,m=>HTML_ENT[m]||m);}
+function extractTds(html){const re=/<td[^>]*>(.*?)<\/td>/gis,out=[];let m;while((m=re.exec(html))!==null)out.push(m[1].replace(/<[^>]+>/g,'').trim());return out;}
+function extractTrs(html){const re=/<tr[^>]*>(.*?)<\/tr>/gis,out=[];let m;while((m=re.exec(html))!==null)out.push(m[1]);return out;}
+function extractTables(html){const re=/<table[^>]*>(.*?)<\/table>/gis,out=[];let m;while((m=re.exec(html))!==null)out.push(m[1]);return out;}
+// 日報HTMLから作業明細を抽出して [{seiban,kojimei},...] を返す
+function extractKojimeiFromContent(html){
+  const out=[];
+  if(!html)return out;
+  try{
+    const tables=extractTables(decodeHtmlEntities(html));
+    if(tables.length<2)return out;
+    extractTrs(tables[1]).forEach(tr=>{
+      const cells=extractTds(tr);
+      if(cells.length>=5){
+        const seiban=cells[1]==='—'?'':cells[1];
+        const kojimei=cells[2]==='—'?'':cells[2];
+        if(seiban&&kojimei)out.push({seiban,kojimei});
+      }
+    });
+  }catch(e){console.error('parse error',e);}
+  return out;
+}
 async function openSeibanModal(rid){
   seibanModalTargetRid=rid;
   const modal=document.getElementById('seiban-modal');
@@ -701,16 +725,17 @@ async function openSeibanModal(rid){
     const res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:''})});
     if(!res.ok){body.innerHTML='<div class="seiban-modal-empty">取得失敗: '+res.status+'</div>';return;}
     const j=await res.json();
-    console.log('[製番検索] レスポンス全体:',j);
     const arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
-    console.log('[製番検索] 配列件数:',arr.length);
-    if(arr.length>0)console.log('[製番検索] 1件目のキー:',Object.keys(arr[0]),'内容:',arr[0]);
-    // 案件名のみ抽出して重複排除
+    // 各日報の content HTML から作業明細をパースして案件名を抽出
     const set=new Set();
     for(const it of arr){
-      // 案件名のフィールド候補：kojimei / 案件名 / Title など環境による
-      const name=it.kojimei||it['案件名']||it.Title||'';
-      if(name&&name.trim())set.add(name.trim());
+      const list=extractKojimeiFromContent(it.content||'');
+      for(const r of list){
+        // 「製番 案件名」の形で表示（モーダル側で扱いやすい）
+        // ただし案件名 cells[2] がすでに「製番＋顧客＋装置名」を含む場合はそのまま使用
+        // 案件名（kojimei）のみで一意に決まるならそれを使う
+        if(r.kojimei)set.add(r.kojimei);
+      }
     }
     seibanModalAllItems=[...set].sort();
     // 略称ドロップダウン構築（案件名の6〜8文字目が[A-Z]{3}なら略称）
