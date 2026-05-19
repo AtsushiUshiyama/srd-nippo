@@ -333,6 +333,8 @@ const PA_SAVE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2c47f740f9db47df95ffdaa5de9b982b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0bHKqk7RGW7TQ4Rnz_1cA8MyrvptqQ2iSjUozPXJuS0';
 const PA_GETONE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/99aa25c0498d495b9b626409f5fb04c2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=i-6IAJ8zepkJ1CkEjsuHrCZRHK0cet8v0IeYc8YRvfs';
 const PA_SEIBAN_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e3068ca3ecbd4819923b2d84aa473de6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Gwmz7GHGFtdX480HFikBPa57NGsRaueYvFiig48m4ag';
+// desknet's NEO製番一覧取得フロー（AppSuite製番アプリから一覧取得）
+const PA_SEIBAN_LIST_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/ef80a2fed095414c984b8eead4594fd1/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2rWgvhaWSJcTz_k_zc4iUe7iQPjd85QuytknUBVJndE';
 // SRD製番検索フロー（部分一致検索／空文字で全件）
 const PA_SEIBAN_SEARCH_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e1df3027f18b4984ad46648c947328db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b1IAKf3DEZuPImWQrkTjsw60fIwx_gZXtvcekOd-2Lc';
 const WORK_TYPES=['机ハ','机ソ','机他','盤製造','機配','試運転','打合せ','移動','その他'];
@@ -722,32 +724,32 @@ async function openSeibanModal(rid){
   }
   body.innerHTML='<div class="seiban-modal-loading">読み込み中...</div>';
   try{
-    const res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:''})});
+    const t0=Date.now();
+    const res=await fetch(PA_SEIBAN_LIST_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
     if(!res.ok){body.innerHTML='<div class="seiban-modal-empty">取得失敗: '+res.status+'</div>';return;}
-    const j=await res.json();
-    let arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
-    console.log('[製番検索] 全件数:',arr.length);
-    // 1907を含む日報を探してパース結果を詳しく見る
-    const debugTargets=arr.filter(it=>(it.content||'').includes('1907'));
-    console.log('[デバッグ] 1907を含む日報数:',debugTargets.length);
-    debugTargets.slice(0,3).forEach((it,i)=>{
-      console.log('[デバッグ]',i,'日付:',it.date,'name:',it.name,'id:',it.id);
-      console.log('[デバッグ] content生:',it.content);
-      const parsed=extractKojimeiFromContent(it.content||'');
-      console.log('[デバッグ] パース結果:',parsed);
-    });
-    // 日報を作業日（date）降順にソート → 先頭5000件のみ使用
-    arr.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    if(arr.length>5000)arr=arr.slice(0,5000);
-    // 各日報の content HTML から作業明細をパースして案件名を抽出
+    const raw=await res.text();
+    let j;try{j=JSON.parse(raw);}catch(e){body.innerHTML='<div class="seiban-modal-empty">JSONパース失敗</div>';return;}
+    console.log('[製番一覧] 取得時間:',(Date.now()-t0)+'ms');
+    console.log('[製番一覧] レスポンス:',j);
+    // desknet's NEOのレスポンス構造：{status:"ok",list:{item:[...]}}
+    // Power Automate経由なので body プロパティに包まれている可能性あり
+    const data=j.body||j;
+    const items=data.list?.item||data.value||[];
+    console.log('[製番一覧] アイテム件数:',items.length);
+    if(items.length>0)console.log('[製番一覧] 1件目:',items[0]);
+    // 案件名を組み立て：製番 + 顧客 + 装置名（フィールド名はレスポンスで確認）
     const set=new Set();
-    for(const it of arr){
-      const list=extractKojimeiFromContent(it.content||'');
-      for(const r of list){
-        if(r.kojimei)set.add(r.kojimei);
-      }
+    for(const it of items){
+      // よくあるパターン：{製番:{val:"1907"},顧客名:{val:"..."},装置名:{val:"..."}}
+      const seiban=it['製番']?.val||it.seiban||'';
+      const kokyaku=it['顧客名']?.val||it['顧客']?.val||it['略称']?.val||'';
+      const sochi=it['装置名']?.val||it['ユーザー名']?.val||'';
+      // 案件名形式：「1907_SUN_装置名」あるいは「1907 SUN 装置名」のパターンに合わせて組み立て
+      // とりあえず連結（フィールド有無により）
+      const parts=[seiban,kokyaku,sochi].filter(v=>v);
+      const name=parts.join('_');
+      if(name)set.add(name);
     }
-    // 製番（先頭4桁）の降順でソート
     seibanModalAllItems=[...set].sort((a,b)=>{
       const ma=a.match(/^(\d{4})/);
       const mb=b.match(/^(\d{4})/);
