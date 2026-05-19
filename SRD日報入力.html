@@ -732,24 +732,17 @@ async function openSeibanModal(rid){
     console.log('[製番一覧] 取得時間:',(Date.now()-t0)+'ms');
     console.log('[製番一覧] レスポンス:',j);
     // desknet's NEOのレスポンス構造：{status:"ok",list:{item:[...]}}
-    // Power Automate経由なので body プロパティに包まれている可能性あり
+    // 既に組み立てられた「案件名」フィールドをそのまま使う
     const data=j.body||j;
     const items=data.list?.item||data.value||[];
     console.log('[製番一覧] アイテム件数:',items.length);
-    if(items.length>0)console.log('[製番一覧] 1件目:',items[0]);
-    // 案件名を組み立て：製番 + 顧客 + 装置名（フィールド名はレスポンスで確認）
+    // 案件名フィールドをそのまま採用
     const set=new Set();
     for(const it of items){
-      // よくあるパターン：{製番:{val:"1907"},顧客名:{val:"..."},装置名:{val:"..."}}
-      const seiban=it['製番']?.val||it.seiban||'';
-      const kokyaku=it['顧客名']?.val||it['顧客']?.val||it['略称']?.val||'';
-      const sochi=it['装置名']?.val||it['ユーザー名']?.val||'';
-      // 案件名形式：「1907_SUN_装置名」あるいは「1907 SUN 装置名」のパターンに合わせて組み立て
-      // とりあえず連結（フィールド有無により）
-      const parts=[seiban,kokyaku,sochi].filter(v=>v);
-      const name=parts.join('_');
+      const name=it['案件名']?.val||'';
       if(name)set.add(name);
     }
+    // 製番（先頭4桁）の降順でソート
     seibanModalAllItems=[...set].sort((a,b)=>{
       const ma=a.match(/^(\d{4})/);
       const mb=b.match(/^(\d{4})/);
