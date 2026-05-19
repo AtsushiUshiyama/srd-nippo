@@ -54,15 +54,35 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 .work-table{width:100%;border-collapse:collapse;table-layout:fixed;}
 .work-table thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:0 6px 8px;white-space:nowrap;}
 .work-table thead th:first-child{padding-left:0;}
-.th-dur{width:110px;}.th-seiban{width:90px;}.th-type{width:110px;}.th-detail{width:240px;}.th-progress{width:240px;}.th-del{width:32px;}
+.th-dur{width:110px;}.th-seiban{width:130px;}.th-type{width:110px;}.th-detail{width:240px;}.th-progress{width:240px;}.th-del{width:32px;}
 .work-table td,.work-table th{overflow:hidden;}
 .work-row td:nth-child(2){overflow:visible;}
 .work-row td{padding:3px 6px;vertical-align:top;}
 .work-row td:first-child{padding-left:0;}
 .work-row input[type="text"],.work-row select{width:100%;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;outline:none;transition:border-color .15s;}
 .work-row input:focus,.work-row select:focus{border-color:var(--border-focus);background:#fff;}
+.seiban-cell{display:flex;gap:4px;align-items:flex-start;}
+.seiban-cell input{flex:1;min-width:0;}
+.seiban-search-btn{flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-family:var(--sans);font-size:11px;color:var(--text-muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.seiban-search-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
 .seiban-name{font-size:10px;color:var(--blue);margin-top:3px;min-height:14px;line-height:1.3;white-space:nowrap;overflow:visible;}
 .seiban-name.err{color:var(--red);}
+/* 製番一覧モーダル */
+.seiban-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:10000;align-items:center;justify-content:center;padding:16px;}
+.seiban-modal.show{display:flex;}
+.seiban-modal-box{background:#fff;border-radius:10px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.seiban-modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.seiban-modal-head h3{margin:0;font-size:15px;font-weight:600;}
+.seiban-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-hint);padding:0 4px;}
+.seiban-modal-filter{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+.seiban-modal-filter label{font-size:12px;color:var(--text-muted);}
+.seiban-modal-filter select{font-family:var(--sans);font-size:13px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);}
+.seiban-modal-count{margin-left:auto;font-size:11px;color:var(--text-hint);}
+.seiban-modal-body{flex:1;overflow-y:auto;padding:8px 0;}
+.seiban-modal-item{padding:8px 18px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid #f0f0f0;transition:background .12s;}
+.seiban-modal-item:hover{background:var(--accent-soft);color:var(--accent);}
+.seiban-modal-empty{padding:30px 18px;text-align:center;color:var(--text-hint);font-size:13px;}
+.seiban-modal-loading{padding:30px 18px;text-align:center;color:var(--text-hint);font-size:13px;}
 .del-btn{background:none;border:1px solid var(--border);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-hint);font-size:15px;transition:all .15s;}
 .del-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 .add-row-btn{margin-top:10px;display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border);border-radius:6px;padding:7px 14px;font-family:var(--sans);font-size:13px;color:var(--text-muted);cursor:pointer;transition:all .15s;width:100%;justify-content:center;}
@@ -313,6 +333,8 @@ const PA_SAVE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2c47f740f9db47df95ffdaa5de9b982b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0bHKqk7RGW7TQ4Rnz_1cA8MyrvptqQ2iSjUozPXJuS0';
 const PA_GETONE_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/99aa25c0498d495b9b626409f5fb04c2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=i-6IAJ8zepkJ1CkEjsuHrCZRHK0cet8v0IeYc8YRvfs';
 const PA_SEIBAN_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e3068ca3ecbd4819923b2d84aa473de6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Gwmz7GHGFtdX480HFikBPa57NGsRaueYvFiig48m4ag';
+// SRD製番検索フロー（部分一致検索／空文字で全件）
+const PA_SEIBAN_SEARCH_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e1df3027f18b4984ad46648c947328db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b1IAKf3DEZuPImWQrkTjsw60fIwx_gZXtvcekOd-2Lc';
 const WORK_TYPES=['机ハ','机ソ','机他','盤製造','機配','試運転','打合せ','移動','その他'];
 let rowId=0, seibanCache={};
 
@@ -628,7 +650,10 @@ function addRow(durMin,seiban,kojimei,type,detail,progress){
       </button>
     </td>
     <td>
-      <input type="text" data-field="seiban" data-rid="${id}" value="${seiban}" placeholder="0000" maxlength="4" oninput="onSeibanInput(this)">
+      <div class="seiban-cell">
+        <input type="text" data-field="seiban" data-rid="${id}" value="${seiban}" placeholder="0000" maxlength="4" oninput="onSeibanInput(this)">
+        <button type="button" class="seiban-search-btn" onclick="openSeibanModal(${id})">検索</button>
+      </div>
       <div class="seiban-name" id="sname-${id}">${kojimei?kojimei:''}</div>
     </td>
     <td>
@@ -655,6 +680,82 @@ function onSeibanInput(el){
     nameEl.textContent='';nameEl.className='seiban-name';
     el.dataset.kojimei='';
   }
+}
+
+// 製番一覧モーダル
+let seibanModalTargetRid=null; // 検索ボタンを押した行のID
+let seibanModalAllItems=[];     // 取得した全案件名（重複排除済）
+async function openSeibanModal(rid){
+  seibanModalTargetRid=rid;
+  const modal=document.getElementById('seiban-modal');
+  const body=document.getElementById('seiban-modal-body');
+  const ryakushoSel=document.getElementById('seiban-modal-ryakusho');
+  modal.classList.add('show');
+  // 既に取得済みなら再利用
+  if(seibanModalAllItems.length>0){
+    renderSeibanModalList();
+    return;
+  }
+  body.innerHTML='<div class="seiban-modal-loading">読み込み中...</div>';
+  try{
+    const res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:''})});
+    if(!res.ok){body.innerHTML='<div class="seiban-modal-empty">取得失敗: '+res.status+'</div>';return;}
+    const j=await res.json();
+    const arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
+    // 案件名のみ抽出して重複排除
+    const set=new Set();
+    for(const it of arr){
+      // 案件名のフィールド候補：kojimei / 案件名 / Title など環境による
+      const name=it.kojimei||it['案件名']||it.Title||'';
+      if(name&&name.trim())set.add(name.trim());
+    }
+    seibanModalAllItems=[...set].sort();
+    // 略称ドロップダウン構築（案件名の6〜8文字目が[A-Z]{3}なら略称）
+    const ryakushoSet=new Set();
+    for(const name of seibanModalAllItems){
+      if(name.length>=8){
+        const r=name.substring(5,8);
+        if(/^[A-Z]{3}$/.test(r))ryakushoSet.add(r);
+      }
+    }
+    ryakushoSel.innerHTML='<option value="">全略称</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}</option>`).join('');
+    renderSeibanModalList();
+  }catch(e){
+    console.error('seiban modal:',e);
+    body.innerHTML='<div class="seiban-modal-empty">接続失敗: '+e.message+'</div>';
+  }
+}
+function renderSeibanModalList(){
+  const body=document.getElementById('seiban-modal-body');
+  const ryakusho=document.getElementById('seiban-modal-ryakusho').value;
+  const countEl=document.getElementById('seiban-modal-count');
+  let list=seibanModalAllItems;
+  if(ryakusho){
+    list=list.filter(name=>name.length>=8&&name.substring(5,8)===ryakusho);
+  }
+  countEl.textContent=list.length+'件';
+  if(!list.length){body.innerHTML='<div class="seiban-modal-empty">該当する案件がありません</div>';return;}
+  body.innerHTML=list.map(name=>`<div class="seiban-modal-item" onclick="selectSeibanFromModal(${JSON.stringify(name).replace(/"/g,'&quot;')})">${name}</div>`).join('');
+}
+function filterSeibanModal(){renderSeibanModalList();}
+function closeSeibanModal(){document.getElementById('seiban-modal').classList.remove('show');}
+function selectSeibanFromModal(name){
+  // 案件名の先頭4文字が製番（例：「0651 ABC 装置名」→ 0651）
+  // 案件名形式：[製番4桁]+[半角スペース]+[顧客3文字]+[半角スペース]+[装置名]
+  const m=name.match(/^(\d{4})/);
+  if(!m){alert('案件名から製番を抽出できませんでした：\n'+name);return;}
+  const seiban=m[1];
+  const rid=seibanModalTargetRid;
+  const input=document.querySelector(`input[data-field="seiban"][data-rid="${rid}"]`);
+  if(!input){closeSeibanModal();return;}
+  input.value=seiban;
+  // 案件名を即セット（API再問い合わせ不要）
+  const nameEl=document.getElementById('sname-'+rid);
+  if(nameEl){
+    showSeibanName(nameEl,name);
+    seibanCache[seiban]=name;
+  }
+  closeSeibanModal();
 }
 
 function delRow(id){const el=document.getElementById('row-'+id);if(el){el.remove();updateRowCount();calcTotal();}}
@@ -786,13 +887,6 @@ async function saveReport(){
       body:JSON.stringify({date,name,note,checkin:effectiveCheckin,checkout:effectiveCheckout,kintai,breakMin:effectiveBreakMin,worktime:effectiveWorktime,commute:effectiveCommute,lodging:effectiveLodging,rows,html})});
     if(res.ok||res.status===202){
       showStatus('✓ 保存成功。お疲れ様でした。','ok');
-      // 次回起動時の復元用：通常/休日出勤の時のみ値を記憶
-      if(!isAbsent){
-        localStorage.setItem('dr-checkin',checkin);
-        localStorage.setItem('dr-checkout',checkout);
-        localStorage.setItem('dr-break',breakMin);
-        localStorage.setItem('dr-kintai',kintai);
-      }
     }else showStatus('保存失敗（'+res.status+'）','err');
   }catch(e){showStatus('接続失敗: '+e.message,'err');}
   btn.disabled=false;
@@ -899,5 +993,24 @@ document.addEventListener('click', e => {
   document.querySelectorAll('.click-tip-box.active,.tooltip-box.active').forEach(b => b.classList.remove('active'));
 });
 </script>
+<!-- 製番一覧モーダル -->
+<div id="seiban-modal" class="seiban-modal" onclick="if(event.target===this)closeSeibanModal()">
+  <div class="seiban-modal-box">
+    <div class="seiban-modal-head">
+      <h3>案件一覧</h3>
+      <button type="button" class="seiban-modal-close" onclick="closeSeibanModal()">×</button>
+    </div>
+    <div class="seiban-modal-filter">
+      <label for="seiban-modal-ryakusho">略称：</label>
+      <select id="seiban-modal-ryakusho" onchange="filterSeibanModal()">
+        <option value="">全略称</option>
+      </select>
+      <span class="seiban-modal-count" id="seiban-modal-count"></span>
+    </div>
+    <div class="seiban-modal-body" id="seiban-modal-body">
+      <div class="seiban-modal-loading">読み込み中...</div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
