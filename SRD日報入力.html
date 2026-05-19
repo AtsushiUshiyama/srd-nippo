@@ -701,7 +701,10 @@ async function openSeibanModal(rid){
     const res=await fetch(PA_SEIBAN_SEARCH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seiban:''})});
     if(!res.ok){body.innerHTML='<div class="seiban-modal-empty">取得失敗: '+res.status+'</div>';return;}
     const j=await res.json();
+    console.log('[製番検索] レスポンス全体:',j);
     const arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
+    console.log('[製番検索] 配列件数:',arr.length);
+    if(arr.length>0)console.log('[製番検索] 1件目のキー:',Object.keys(arr[0]),'内容:',arr[0]);
     // 案件名のみ抽出して重複排除
     const set=new Set();
     for(const it of arr){
