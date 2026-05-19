@@ -416,7 +416,7 @@ function findMfEmployee(name){
 }
 function exportMfKintaiCsv(){
   const f=getFiltered();
-  const header='従業員番号,苗字,名前,打刻所属日,打刻日,打刻時刻,打刻種別';
+  const header='従業員番号,苗字,名前,打刻所属日,打刻日,打刻時間,打刻種別';
   const rows=[];
   const unmatched=new Set();
   for(const d of f){
@@ -429,10 +429,10 @@ function exportMfKintaiCsv(){
     // 日付を yyyy/MM/dd に変換（d.dateは yyyy-MM-dd 形式）
     const ymd=d.date.replace(/-/g,'/');
     if(d.checkin){
-      rows.push([emp.no,emp.sei,emp.mei,ymd,ymd,d.checkin,'出勤'].map(csv).join(','));
+      rows.push(['="'+emp.no+'"',csv(emp.sei),csv(emp.mei),csv(ymd),csv(ymd),csv(d.checkin),csv('出勤')].join(','));
     }
     if(d.checkout){
-      rows.push([emp.no,emp.sei,emp.mei,ymd,ymd,d.checkout,'退勤'].map(csv).join(','));
+      rows.push(['="'+emp.no+'"',csv(emp.sei),csv(emp.mei),csv(ymd),csv(ymd),csv(d.checkout),csv('退勤')].join(','));
     }
   }
   if(unmatched.size){
