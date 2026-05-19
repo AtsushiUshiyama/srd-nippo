@@ -726,6 +726,16 @@ async function openSeibanModal(rid){
     if(!res.ok){body.innerHTML='<div class="seiban-modal-empty">取得失敗: '+res.status+'</div>';return;}
     const j=await res.json();
     let arr=Array.isArray(j)?j:(j.value||j.d?.results||[]);
+    console.log('[製番検索] 全件数:',arr.length);
+    // 1907を含む日報を探してパース結果を詳しく見る
+    const debugTargets=arr.filter(it=>(it.content||'').includes('1907'));
+    console.log('[デバッグ] 1907を含む日報数:',debugTargets.length);
+    debugTargets.slice(0,3).forEach((it,i)=>{
+      console.log('[デバッグ]',i,'日付:',it.date,'name:',it.name,'id:',it.id);
+      console.log('[デバッグ] content生:',it.content);
+      const parsed=extractKojimeiFromContent(it.content||'');
+      console.log('[デバッグ] パース結果:',parsed);
+    });
     // 日報を作業日（date）降順にソート → 先頭5000件のみ使用
     arr.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     if(arr.length>5000)arr=arr.slice(0,5000);
