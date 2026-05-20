@@ -102,8 +102,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
@@ -382,8 +382,8 @@ function renderAll(){
 function updatePeriodButtonHighlight(){
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
-  // ロードが完了していて、現在の日付欄が前回ロード時と同じ場合のみハイライト対象とする
-  const loaded=(from===lastLoadedFrom&&to===lastLoadedTo&&lastLoadedFrom!=='');
+  // 日付欄の範囲が前回ロード時の範囲に収まっている（=allDataで表示可能）ならハイライト対象
+  const loaded=(lastLoadedFrom!==''&&from>=lastLoadedFrom&&to<=lastLoadedTo);
   const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-shime','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   if(!loaded)return;
