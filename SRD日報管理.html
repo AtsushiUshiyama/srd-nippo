@@ -25,6 +25,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn:hover{opacity:.85;}
 .btn-primary{background:var(--accent);color:#fff;}
 .btn-secondary{background:none;border:1px solid var(--border);color:var(--text-muted);}
+.btn-secondary.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .btn-green{background:var(--green);color:#fff;}
 .btn-green:disabled{opacity:.35;cursor:not-allowed;}
 .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
@@ -98,22 +99,22 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()" style="height:34px">自分</button></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
+    <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to"></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-actions">
-      <button class="btn btn-secondary" onclick="setPeriod('all')">全期間</button>
-      <button class="btn btn-secondary" onclick="setPeriod('1y')">直近1年</button>
-      <button class="btn btn-secondary" onclick="setPeriod('1m')">直近1か月</button>
-      <button class="btn btn-secondary" onclick="setPeriod('shime')">締め</button>
-      <button class="btn btn-secondary" onclick="filterDay(0)">本日</button>
-      <button class="btn btn-secondary" onclick="filterDay(1)">昨日</button>
-      <button class="btn btn-secondary" onclick="filterDay(2)">2日前</button>
-      <button class="btn btn-secondary" onclick="filterDay(3)">3日前</button>
-      <button class="btn btn-secondary" onclick="filterDay(4)">4日前</button>
-      <button class="btn btn-secondary" onclick="filterDay(5)">5日前</button>
-      <button class="btn btn-secondary" onclick="clearFilters()">リセット</button>
+      <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
+      <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
+      <button class="btn btn-secondary" id="btn-period-1m" onclick="setPeriod('1m')">直近1か月</button>
+      <button class="btn btn-secondary" id="btn-period-shime" onclick="setPeriod('shime')">締め</button>
+      <button class="btn btn-secondary" id="btn-day-0" onclick="filterDay(0)">本日</button>
+      <button class="btn btn-secondary" id="btn-day-1" onclick="filterDay(1)">昨日</button>
+      <button class="btn btn-secondary" id="btn-day-2" onclick="filterDay(2)">2日前</button>
+      <button class="btn btn-secondary" id="btn-day-3" onclick="filterDay(3)">3日前</button>
+      <button class="btn btn-secondary" id="btn-day-4" onclick="filterDay(4)">4日前</button>
+      <button class="btn btn-secondary" id="btn-day-5" onclick="filterDay(5)">5日前</button>
       <button class="btn btn-primary" onclick="reloadData()">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
         再読み込み
@@ -374,6 +375,37 @@ function renderAll(){
   if(document.getElementById('kintai-tbody'))renderKintai(f);
   if(document.getElementById('sagyou-tbody'))renderSagyou(f);
   updateReportButton(f);
+  updatePeriodButtonHighlight();
+}
+
+// 日付欄の値と一致する期間ボタンに active クラスを付与
+function updatePeriodButtonHighlight(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  // ロードが完了していて、現在の日付欄が前回ロード時と同じ場合のみハイライト対象とする
+  const loaded=(from===lastLoadedFrom&&to===lastLoadedTo&&lastLoadedFrom!=='');
+  const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-shime','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  if(!loaded)return;
+  const today=new Date();
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const todayStr=fmt(today);
+  // 期間系
+  if(from==='2000-01-01'&&to===todayStr){document.getElementById('btn-period-all').classList.add('active');return;}
+  const oneYearAgo=fmt(new Date(today.getFullYear()-1,today.getMonth(),today.getDate()));
+  if(from===oneYearAgo&&to===todayStr){document.getElementById('btn-period-1y').classList.add('active');return;}
+  const oneMonthAgo=fmt(new Date(today.getFullYear(),today.getMonth()-1,today.getDate()));
+  if(from===oneMonthAgo&&to===todayStr){document.getElementById('btn-period-1m').classList.add('active');return;}
+  const shimeFrom=fmt(new Date(today.getFullYear(),today.getMonth()-1,16));
+  const shimeTo=fmt(new Date(today.getFullYear(),today.getMonth(),15));
+  if(from===shimeFrom&&to===shimeTo){document.getElementById('btn-period-shime').classList.add('active');return;}
+  // 日付ピンポイント系（from===to のときのみ）
+  if(from===to){
+    for(let i=0;i<=5;i++){
+      const d=new Date();d.setDate(d.getDate()-i);
+      if(from===fmt(d)){document.getElementById('btn-day-'+i).classList.add('active');return;}
+    }
+  }
 }
 
 // レポートCSVボタンの有効/無効、およびレポート表示エリアの更新
@@ -589,23 +621,20 @@ function exportReportCsv(){
 function csv(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
 function showLoading(v){document.getElementById('loading').style.display=v?'flex':'none';}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.style.display='block';}
-function reloadData(){
-  // 製番空欄かつ日付範囲が長期（1年超）の場合は確認ダイアログ
+// 1年超の期間で製番無指定のデータ取得時の警告。OKで true、キャンセルで false を返す
+function confirmLongRangeIfNeeded(){
   const seibanRaw=document.getElementById('filter-seiban').value.trim();
-  if(!seibanRaw){
-    const from=document.getElementById('filter-from').value;
-    const to=document.getElementById('filter-to').value;
-    if(from&&to){
-      const fromD=new Date(from);
-      const toD=new Date(to);
-      const days=(toD-fromD)/(1000*60*60*24);
-      if(days>366){
-        if(!confirm('製番の指定をせずに1年を超える期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？')){
-          return;
-        }
-      }
-    }
-  }
+  if(seibanRaw)return true;
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  if(!from||!to)return true;
+  const days=(new Date(to)-new Date(from))/(1000*60*60*24);
+  if(days<=366)return true;
+  return confirm('製番の指定をせずに1年を超える期間のデータを取得します。\n表示に時間がかかります（数十秒）が、よろしいですか？');
+}
+
+function reloadData(){
+  if(!confirmLongRangeIfNeeded())return;
   loadData();
 }
 
@@ -616,12 +645,21 @@ function applyPeriod(){
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
   const seiban=document.getElementById('filter-seiban').value.trim();
-  // 製番が前回取得時と違う → サーバ取得条件が変わるので必ず再取得
-  if(seiban!==lastLoadedSeiban){loadData();return;}
-  // 初回未取得 or 期間が前回取得範囲をはみ出す → 再取得
-  if(!lastLoadedFrom||!lastLoadedTo||from<lastLoadedFrom||to>lastLoadedTo){loadData();return;}
+  // 製番が前回取得時と違う or 期間が前回取得範囲をはみ出す → 再取得
+  const needReload=(seiban!==lastLoadedSeiban)||(!lastLoadedFrom||!lastLoadedTo||from<lastLoadedFrom||to>lastLoadedTo);
+  if(needReload){
+    if(!confirmLongRangeIfNeeded())return;
+    loadData();
+    return;
+  }
   // 範囲内 → 手元の allData を絞り込み表示するだけ
-  renderAll();
+  // ただし allData が大きい時は renderAll の同期処理でフリーズするため、オーバーレイを出してから 1tick 譲る
+  if(allData.length>1000){
+    showLoading(true);
+    setTimeout(()=>{renderAll();showLoading(false);},0);
+  }else{
+    renderAll();
+  }
 }
 
 function filterDay(daysAgo){
@@ -704,16 +742,12 @@ function filterMe(){
 }
 
 function clearFilters(){
-  ['filter-name','filter-from','filter-to','filter-seiban','filter-ryakusho','filter-type'].forEach(id=>document.getElementById(id).value='');
+  // 作業者・略称・作業種別・製番のみクリア（日付は変更しない）
+  ['filter-name','filter-ryakusho','filter-type','filter-seiban'].forEach(id=>document.getElementById(id).value='');
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
   document.getElementById('btn-report-csv').disabled=true;
-  // 日付を初期値（直近1ヶ月）に戻す
-  const today=new Date();
-  const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
-  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  document.getElementById('filter-from').value=fmt(oneMonthAgo);
-  document.getElementById('filter-to').value=fmt(today);
+  // 製番をクリアしたので applyPeriod 経由で再取得が必要になり得る
   applyPeriod();
 }
 
