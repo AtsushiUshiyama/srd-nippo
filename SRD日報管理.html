@@ -159,13 +159,15 @@ const PA_SEIBAN_SEARCH_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.env
 
 let allData=[];
 let sortKey='date', sortDir='desc';
+// 前回 loadData() で取得した時の条件（期間ボタンで再取得要否を判定するため）
+let lastLoadedFrom='', lastLoadedTo='', lastLoadedSeiban='';
 
 window.onload=async()=>{
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   // デフォルト：直近1ヶ月〜今日
   const today=new Date();
   const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
-  const fmt=d=>d.toISOString().slice(0,10);
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   document.getElementById('filter-from').value=fmt(oneMonthAgo);
   document.getElementById('filter-to').value=fmt(today);
   await loadData();
@@ -234,6 +236,10 @@ async function loadData(){
         rows:parsed.rows
       };
     }).sort((a,b)=>b.created.localeCompare(a.created));
+    // 今回の取得条件を記録（期間ボタンの再取得要否判定に使う）
+    lastLoadedFrom=document.getElementById('filter-from').value;
+    lastLoadedTo=document.getElementById('filter-to').value;
+    lastLoadedSeiban=document.getElementById('filter-seiban').value.trim();
     populateFilters();
     renderAll();
   }catch(e){
@@ -603,18 +609,33 @@ function reloadData(){
   loadData();
 }
 
+// 期間設定系ボタンの共通処理
+// filter-from/to/seiban が前回 loadData の取得範囲に収まっていれば renderAll() のみ、
+// はみ出していたら loadData() を実行する
+function applyPeriod(){
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  const seiban=document.getElementById('filter-seiban').value.trim();
+  // 製番が前回取得時と違う → サーバ取得条件が変わるので必ず再取得
+  if(seiban!==lastLoadedSeiban){loadData();return;}
+  // 初回未取得 or 期間が前回取得範囲をはみ出す → 再取得
+  if(!lastLoadedFrom||!lastLoadedTo||from<lastLoadedFrom||to>lastLoadedTo){loadData();return;}
+  // 範囲内 → 手元の allData を絞り込み表示するだけ
+  renderAll();
+}
+
 function filterDay(daysAgo){
   const d=new Date();d.setDate(d.getDate()-daysAgo);
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const s=fmt(d);
   document.getElementById('filter-from').value=s;
   document.getElementById('filter-to').value=s;
-  renderAll();
+  applyPeriod();
 }
 
 function setPeriod(period){
   const today=new Date();
-  const fmt=d=>d.toISOString().slice(0,10);
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   let from='';
   if(period==='all'){
     from='2000-01-01';
@@ -630,11 +651,12 @@ function setPeriod(period){
     const toD=new Date(today.getFullYear(),today.getMonth(),15);
     document.getElementById('filter-from').value=fmt(fromD);
     document.getElementById('filter-to').value=fmt(toD);
+    applyPeriod();
     return;
   }
   document.getElementById('filter-from').value=from;
   document.getElementById('filter-to').value=fmt(today);
-  // 日付欄をセットするだけ。データ取得は「再読み込み」ボタンで実行。
+  applyPeriod();
 }
 
 function filterMe(){
@@ -686,13 +708,13 @@ function clearFilters(){
   selectedDate=''; selectedName='';
   document.getElementById('btn-edit').disabled=true;
   document.getElementById('btn-report-csv').disabled=true;
-  // 日付を初期値（直近1ヶ月）に戻す（データ取得は「再読み込み」ボタンで）
+  // 日付を初期値（直近1ヶ月）に戻す
   const today=new Date();
   const oneMonthAgo=new Date(today.getFullYear(),today.getMonth()-1,today.getDate());
-  const fmt=d=>d.toISOString().slice(0,10);
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   document.getElementById('filter-from').value=fmt(oneMonthAgo);
   document.getElementById('filter-to').value=fmt(today);
-  renderAll();
+  applyPeriod();
 }
 
 </script>
