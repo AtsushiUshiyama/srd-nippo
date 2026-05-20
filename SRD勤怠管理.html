@@ -101,7 +101,9 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
       <button class="btn btn-secondary" id="btn-period-1m" onclick="setPeriod('1m')">直近1か月</button>
-      <button class="btn btn-secondary" id="btn-period-shime" onclick="setPeriod('shime')">締め</button>
+      <button class="btn btn-secondary" id="btn-period-shime15" onclick="setPeriod('shime15')">15日締め</button>
+      <button class="btn btn-secondary" id="btn-period-shime20" onclick="setPeriod('shime20')">20日締め</button>
+      <button class="btn btn-secondary" id="btn-period-shimeM" onclick="setPeriod('shimeM')">末締め</button>
       <button class="btn btn-secondary" id="btn-day-0" onclick="filterDay(0)">本日</button>
       <button class="btn btn-secondary" id="btn-day-1" onclick="filterDay(1)">昨日</button>
       <button class="btn btn-secondary" id="btn-day-2" onclick="filterDay(2)">2日前</button>
@@ -327,7 +329,7 @@ function updatePeriodButtonHighlight(){
   const to=document.getElementById('filter-to').value;
   // 日付欄の範囲が前回ロード時の範囲に収まっている（=allDataで表示可能）ならハイライト対象
   const loaded=(lastLoadedFrom!==''&&from>=lastLoadedFrom&&to<=lastLoadedTo);
-  const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-shime','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
+  const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-shime15','btn-period-shime20','btn-period-shimeM','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
   if(!loaded)return;
   const today=new Date();
@@ -339,9 +341,18 @@ function updatePeriodButtonHighlight(){
   if(from===oneYearAgo&&to===todayStr){document.getElementById('btn-period-1y').classList.add('active');return;}
   const oneMonthAgo=fmt(new Date(today.getFullYear(),today.getMonth()-1,today.getDate()));
   if(from===oneMonthAgo&&to===todayStr){document.getElementById('btn-period-1m').classList.add('active');return;}
-  const shimeFrom=fmt(new Date(today.getFullYear(),today.getMonth()-1,16));
-  const shimeTo=fmt(new Date(today.getFullYear(),today.getMonth(),15));
-  if(from===shimeFrom&&to===shimeTo){document.getElementById('btn-period-shime').classList.add('active');return;}
+  // 15日締め
+  const shime15From=fmt(new Date(today.getFullYear(),today.getMonth()-1,16));
+  const shime15To=fmt(new Date(today.getFullYear(),today.getMonth(),15));
+  if(from===shime15From&&to===shime15To){document.getElementById('btn-period-shime15').classList.add('active');return;}
+  // 20日締め
+  const shime20From=fmt(new Date(today.getFullYear(),today.getMonth()-1,21));
+  const shime20To=fmt(new Date(today.getFullYear(),today.getMonth(),20));
+  if(from===shime20From&&to===shime20To){document.getElementById('btn-period-shime20').classList.add('active');return;}
+  // 末締め
+  const shimeMFrom=fmt(new Date(today.getFullYear(),today.getMonth()-1,0));
+  const shimeMTo=fmt(new Date(today.getFullYear(),today.getMonth(),0));
+  if(from===shimeMFrom&&to===shimeMTo){document.getElementById('btn-period-shimeM').classList.add('active');return;}
   // 日付ピンポイント系（from===to のときのみ）
   if(from===to){
     for(let i=0;i<=5;i++){
@@ -602,10 +613,26 @@ function setPeriod(period){
     from=fmtDate(new Date(today.getFullYear()-1,today.getMonth(),today.getDate()));
   }else if(period==='1m'){
     from=fmtDate(new Date(today.getFullYear(),today.getMonth()-1,today.getDate()));
-  }else if(period==='shime'){
-    // 常に前月16日〜当月15日
+  }else if(period==='shime15'){
+    // 15日締め：前月16日〜当月15日
     const fromD=new Date(today.getFullYear(),today.getMonth()-1,16);
     const toD=new Date(today.getFullYear(),today.getMonth(),15);
+    document.getElementById('filter-from').value=fmtDate(fromD);
+    document.getElementById('filter-to').value=fmtDate(toD);
+    applyPeriod();
+    return;
+  }else if(period==='shime20'){
+    // 20日締め：前月21日〜当月20日
+    const fromD=new Date(today.getFullYear(),today.getMonth()-1,21);
+    const toD=new Date(today.getFullYear(),today.getMonth(),20);
+    document.getElementById('filter-from').value=fmtDate(fromD);
+    document.getElementById('filter-to').value=fmtDate(toD);
+    applyPeriod();
+    return;
+  }else if(period==='shimeM'){
+    // 末締め：前々月末日〜前月末日（Date月にゼロ日を渡すと前月末になる仕様を利用）
+    const fromD=new Date(today.getFullYear(),today.getMonth()-1,0);
+    const toD=new Date(today.getFullYear(),today.getMonth(),0);
     document.getElementById('filter-from').value=fmtDate(fromD);
     document.getElementById('filter-to').value=fmtDate(toD);
     applyPeriod();
