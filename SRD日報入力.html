@@ -206,8 +206,8 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 
     <h4>勤怠区分</h4>
     <ul>
-      <li><strong>通常出勤</strong>：通常勤務</li>
-      <li><strong>欠勤</strong>／<strong>休暇</strong>：時刻・作業明細は入力不要</li>
+      <li><strong>通常出勤／休日出勤</strong>：作業時間・製番などを入力</li>
+      <li><strong>欠勤／休暇</strong>：時刻・作業明細は入力不要</li>
     </ul>
 
     <h4>出勤・退勤時刻の入力</h4>
@@ -220,20 +220,18 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <p>該当する出張区分にチェック。どちらか一方のみ選択可。</p>
 
     <h4>作業明細</h4>
+    <p>各項目の詳しい入力方法は、近傍の小さい <strong>？</strong> を確認。</p>
     <ul>
-      <li><strong>＋作業を追加</strong>：行を追加</li>
-      <li><strong>製番</strong>：4桁数字を直接入力、または「検索」ボタンで案件一覧から選択</li>
+      <li><strong>製番</strong>：4桁数字を直接入力、または「検索」ボタンで案件一覧から選択。顧客フィルタ付。<br>※desknet's NEO 製番と連動。</li>
       <li><strong>略称</strong>：プルダウンから選ぶ</li>
       <li><strong>作業種別</strong>：プルダウンから選ぶ</li>
       <li><strong>時間</strong>：作業に費やした時間（分単位、15分刻み推奨）</li>
       <li><strong>×</strong>：行を削除</li>
+      <li><strong>＋作業を追加</strong>：行は何行でも追加できます。</li>
     </ul>
 
-    <h4>案件一覧（製番検索）</h4>
-    <p>「検索」ボタンで案件一覧モーダルを開く。desknet's NEO の AppSuite 製番アプリから直接取得（約1.5秒で約2,000件）。一覧から選ぶと製番欄に自動で入る。</p>
-
-    <h4>備考</h4>
-    <p>特記事項があれば記入。表示後の日報管理画面でも検索可能。</p>
+    <h4>右上の備考</h4>
+    <p>あれば記入。SRD勤怠管理でも検索可能。</p>
 
     <h4>保存・リセット</h4>
     <ul>
@@ -245,7 +243,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <ul>
       <li>保存できない → ネットワーク状況を確認。再ログインで解消することも</li>
       <li>製番一覧が出ない → 「再読み込み」を試す</li>
-      <li>その他の不具合 → 牛山まで</li>
+      <li>その他の不具合・改善案 → Chatwork【新しい作業日報】で社長に報告</li>
     </ul>
   </div>
 </div>
@@ -272,7 +270,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 <option value="松下 歩美">松下 歩美</option>
 <option value="大野 潤">大野 潤</option>
 <option value="永井 遼">永井 遼</option></select></div>
-        <div class="field"><label>備考・連絡事項</label><input type="text" id="f-note" placeholder="任意"></div>
+        <div class="field"><label>備考</label><input type="text" id="f-note" placeholder="任意"></div>
       </div>
     </div>
   </div>
