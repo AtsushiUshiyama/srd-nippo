@@ -95,11 +95,11 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 <div class="main">
   <div id="error-msg"></div>
   <div class="filter-bar">
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAll()"><option value="">全員</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()" style="height:34px">自分</button></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAll()"><option value="">全略称</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAll()"><option value="">全種別</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');renderAll()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
@@ -366,7 +366,7 @@ function sortBy(key){
       th.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
     }
   });
-  renderAll();
+  renderAllSafe();
 }
 
 function renderAll(){
@@ -376,6 +376,16 @@ function renderAll(){
   if(document.getElementById('sagyou-tbody'))renderSagyou(f);
   updateReportButton(f);
   updatePeriodButtonHighlight();
+}
+
+// allDataが大きい時はオーバーレイを出してから1tick譲ってrenderAllを実行（フリーズ防止）
+function renderAllSafe(){
+  if(allData.length>1000){
+    showLoading(true);
+    setTimeout(()=>{renderAll();showLoading(false);},0);
+  }else{
+    renderAll();
+  }
 }
 
 // 日付欄の値と一致する期間ボタンに active クラスを付与
@@ -652,14 +662,8 @@ function applyPeriod(){
     loadData();
     return;
   }
-  // 範囲内 → 手元の allData を絞り込み表示するだけ
-  // ただし allData が大きい時は renderAll の同期処理でフリーズするため、オーバーレイを出してから 1tick 譲る
-  if(allData.length>1000){
-    showLoading(true);
-    setTimeout(()=>{renderAll();showLoading(false);},0);
-  }else{
-    renderAll();
-  }
+  // 範囲内 → 手元の allData を絞り込み表示するだけ（件数が多い時はオーバーレイ）
+  renderAllSafe();
 }
 
 function filterDay(daysAgo){
@@ -738,7 +742,7 @@ function filterMe(){
     sel.appendChild(opt);
   }
   sel.value=me;
-  renderAll();
+  renderAllSafe();
 }
 
 function clearFilters(){
