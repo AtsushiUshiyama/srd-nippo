@@ -190,8 +190,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 8px;"></div>
-    <div class="filter-field" style="min-width:130px;max-width:170px"><label>日付（開始）</label><div style="display:flex;align-items:center;gap:6px;"><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight();updateWeekday()" style="flex:1;min-width:0"><span id="from-weekday" style="font-size:13px;color:var(--text-muted);min-width:14px;text-align:center"></span></div></div>
-    <div class="filter-field" style="min-width:130px;max-width:170px"><label>日付（終了）</label><div style="display:flex;align-items:center;gap:6px;"><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight();updateWeekday()" style="flex:1;min-width:0"><span id="to-weekday" style="font-size:13px;color:var(--text-muted);min-width:14px;text-align:center"></span></div></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
+    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
@@ -257,22 +257,6 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){closeHelp();}
 });
 
-// 日付欄の右に曜日漢字を表示
-function updateWeekday(){
-  const wd=['日','月','火','水','木','金','土'];
-  const setWd=(inputId,spanId)=>{
-    const v=document.getElementById(inputId).value;
-    const el=document.getElementById(spanId);
-    if(!v){el.textContent='';return;}
-    // JSTで安全に曜日取得（YYYY-MM-DDをそのままDateに渡すとUTC解釈されるので分解）
-    const [y,m,d]=v.split('-').map(Number);
-    const dt=new Date(y,m-1,d);
-    el.textContent=wd[dt.getDay()];
-  };
-  setWd('filter-from','from-weekday');
-  setWd('filter-to','to-weekday');
-}
-
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8b7174c6210f41a9b50a3e7796579d6e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nCORL5zEr7xEodhJd-_DDo4L4RGBcTnPiOxUpksQ2jo';
 const PA_SEIBAN_SEARCH_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e1df3027f18b4984ad46648c947328db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b1IAKf3DEZuPImWQrkTjsw60fIwx_gZXtvcekOd-2Lc';
 
@@ -288,7 +272,6 @@ window.onload=async()=>{
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   document.getElementById('filter-from').value=fmt(oneMonthAgo);
   document.getElementById('filter-to').value=fmt(today);
-  updateWeekday();
   await loadData();
 };
 
@@ -508,7 +491,6 @@ function renderAllSafe(){
 
 // 日付欄の値と一致する期間ボタンに active クラスを付与
 function updatePeriodButtonHighlight(){
-  updateWeekday();
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
   // 日付欄の範囲が前回ロード時の範囲に収まっている（=allDataで表示可能）ならハイライト対象
