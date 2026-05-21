@@ -116,13 +116,13 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="help-panel-body">
     <h4>基本の流れ</h4>
     <ol style="margin:4px 0 10px 0;padding-left:22px;">
-      <li>期間と作業者を絞り込む</li>
-      <li><strong>再読み込み</strong>でデータを取得</li>
-      <li>勤怠一覧の行をクリックすると、その日の作業明細が下に表示される</li>
+      <li>期間と作業者を絞り込む（期間ボタンを押すと自動でデータ取得される）</li>
+      <li>勤怠一覧の行をクリック → <strong>編集</strong>ボタンが有効になる</li>
+      <li><strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く</li>
     </ol>
 
     <h4>期間フィルタ</h4>
-    <p>上部のボタンで期間を一発セット。クリックするとfrom/toが入るだけで、<strong>データ取得は「再読み込み」ボタンを押すまで実行されない</strong>。</p>
+    <p>上部のボタンで期間を一発セット。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
       <li><strong>直近1年</strong>／<strong>直近1か月</strong></li>
@@ -142,39 +142,30 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <ul>
       <li>日付・作業者・勤務区分・出退勤・休憩・実働・出張・備考などを一覧表示</li>
       <li>列見出しのクリックでソート可</li>
-      <li>行をクリックすると、その日の<strong>作業明細</strong>が下のテーブルに表示される</li>
     </ul>
 
+    <h4>編集</h4>
+    <p>勤怠一覧の行をクリックして選択 → 上部の<strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く。</p>
+
     <h4>未提出メンバー</h4>
-    <p>作業者フィルタが「全員」のとき、「勤怠一覧」ラベルの右に<strong>期間内に日報を出していないメンバー</strong>が赤バッジで表示される。退職者は除外済み。</p>
+    <p>作業者フィルタが「全員」のとき、「勤怠一覧」ラベルの右に<strong>期間内に日報を出していないメンバー</strong>が赤バッジで表示される。</p>
 
     <h4>CSV出力</h4>
     <p>表示中の勤怠一覧をそのままCSVで出力。</p>
 
     <h4>MF勤怠CSV</h4>
     <p>MoneyForwardクラウド勤怠の「日次勤怠データインポート」用CSVを出力。</p>
-    <ul>
-      <li>作業者フィルタで<strong>個別の人を選択</strong>している必要あり</li>
-      <li>欠勤・休暇、または出退勤どちらも未入力の日はスキップ</li>
-      <li>MFインポート時の文字コードは<strong>UTF-8</strong>を選択</li>
-    </ul>
 
     <h4>MF経費CSV</h4>
     <p>MoneyForwardクラウド経費の「出張手当」インポート用CSVを出力。</p>
-    <ul>
-      <li>通い出張 → 500円／宿泊出張 → 3,000円</li>
-      <li>両方ある日は2行に分割</li>
-      <li>MF側に経費科目<strong>「出張手当」</strong>を登録しておくこと</li>
-    </ul>
 
     <h4>再読み込み</h4>
-    <p>期間・作業者を変えたら必ず押す。SharePoint→Power Automate経由でデータを取得。件数が多い期間は数秒〜十数秒かかる。</p>
+    <p>SharePointのデータが更新された時に、最新のデータを取り直すためのボタン。</p>
 
     <h4>困った時</h4>
     <ul>
       <li>データが出ない → 期間を狭めて再読み込み</li>
       <li>未提出バッジが出ない → 作業者フィルタを「全員」にする</li>
-      <li>MFのインポートでエラー → 文字コード「UTF-8」を確認、従業員マスタの番号一致を確認</li>
       <li>その他の不具合・改善案 → Chatwork【新しい作業日報】で社長に報告</li>
     </ul>
   </div>
