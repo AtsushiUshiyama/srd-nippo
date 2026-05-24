@@ -148,7 +148,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <p>勤怠一覧の行をクリックして選択 → 上部の<strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く。</p>
 
     <h4>未提出メンバー</h4>
-    <p>作業者フィルタが「全員」のとき、「勤怠一覧」ラベルの右に<strong>期間内に日報を出していないメンバー</strong>が赤バッジで表示される。</p>
+    <p>作業者フィルタが「全員」かつ<strong>期間が1日</strong>（本日／昨日／2〜5日前など）のとき、「勤怠一覧」ラベルの右に<strong>その日に日報を出していないメンバー</strong>が赤バッジで表示される。</p>
 
     <h4>CSV出力</h4>
     <p>表示中の勤怠一覧をそのままCSVで出力。</p>
@@ -165,7 +165,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <h4>困った時</h4>
     <ul>
       <li>データが出ない → 期間を狭めて再読み込み</li>
-      <li>未提出バッジが出ない → 作業者フィルタを「全員」にする</li>
+      <li>未提出バッジが出ない → 作業者フィルタを「全員」かつ期間ボタンを1日（本日／昨日／2〜5日前）にする</li>
       <li>その他の不具合・改善案 → Chatwork【新しい作業日報】で社長に報告</li>
     </ul>
   </div>
@@ -358,6 +358,8 @@ function parseReportHtml(html){
 
 function populateFilters(){
   const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
+  // 取得分を全員リストにマージ（未提出計算で使うため、過去取得分も保持）
+  mergeAllMembers(names);
   const ns=document.getElementById('filter-name');
   ns.innerHTML='<option value="">全員</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
 
@@ -456,15 +458,37 @@ function updatePeriodButtonHighlight(){
 
 // 作業者フィルター＝全員の時、表示中の期間に勤怠データが1件もないメンバーを表示
 // 退職者は除外する
+// 過去取得分の和集合として保持する「全員リスト」（未提出計算用）
+// localStorage に保存して、再読み込み（1日縛り等で取得が縮む）でも消えないようにする
+const ALL_MEMBERS_KEY='srd-kintai-all-members';
+function loadAllMembers(){
+  try{return JSON.parse(localStorage.getItem(ALL_MEMBERS_KEY)||'[]');}
+  catch(e){return [];}
+}
+function saveAllMembers(arr){
+  try{localStorage.setItem(ALL_MEMBERS_KEY,JSON.stringify(arr));}catch(e){}
+}
+function mergeAllMembers(newNames){
+  const cur=new Set(loadAllMembers());
+  newNames.forEach(n=>{if(n)cur.add(n);});
+  const merged=[...cur].sort();
+  saveAllMembers(merged);
+  return merged;
+}
+
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
   if(!el)return;
+  // 期間が1日（開始==終了）の時だけ未提出バッジを出す
+  // 期間範囲（直近1か月、末締め等）では全員が必ず出社してるわけでもないので意味がない
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  if(!from||!to||from!==to){el.innerHTML='';return;}
   const nameFilter=document.getElementById('filter-name').value;
   if(nameFilter){el.innerHTML='';return;}
-  // 作業者プルダウンの全option（先頭の「全員」は除く）
-  const sel=document.getElementById('filter-name');
-  const all=[...sel.options].map(o=>o.value).filter(v=>v);
+  // 永続化された全員リスト（過去取得分の和集合）から判定
+  const all=loadAllMembers();
   if(!all.length){el.innerHTML='';return;}
   // 表示中データに含まれる作業者集合
   const present=new Set(f.map(d=>d.name).filter(Boolean));
