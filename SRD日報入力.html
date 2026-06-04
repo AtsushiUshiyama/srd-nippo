@@ -193,6 +193,10 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 .tool-launcher-item-current .tool-launcher-badge{background:var(--accent);}
 .tool-launcher-footer{margin-top:auto;padding-top:16px;border-top:1px solid #e5e7eb;color:#6b7280;text-align:center;font-size:11px;}
 @media (max-width:600px){.tool-launcher-panel{width:calc(100vw - 32px);}}
+.missing-banner{display:none;background:#fdecea;border:1px solid #f5c6c1;color:#c0392b;border-radius:6px;padding:10px 14px;margin:12px 0;font-size:14px;font-weight:600;align-items:center;gap:8px;flex-wrap:wrap;}
+.missing-banner.show{display:flex;}
+.missing-banner a{color:#c0392b;text-decoration:underline;cursor:pointer;font-weight:700;}
+.missing-banner .mb-close{margin-left:auto;cursor:pointer;border:none;background:transparent;color:#c0392b;font-size:18px;line-height:1;padding:0 4px;}
 </style>
 </head>
 <body>
@@ -288,6 +292,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 </div>
 
 <div class="main">
+  <div id="missing-banner" class="missing-banner"></div>
   <div class="section">
     <div class="section-header"><span class="section-label">基本情報</span></div>
     <div class="section-body">
@@ -614,6 +619,7 @@ window.onload=async()=>{
     addRow(); addRow(); addRow();
   }
   drawClock();
+  checkAndShowMissing();
 };
 
 // 既存データをSharePointから読み込んでフォームにセット
@@ -1189,6 +1195,61 @@ function closeToolLauncher(){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'&&document.getElementById('tool-launcher-panel')&&document.getElementById('tool-launcher-panel').classList.contains('show')){closeToolLauncher();}
 });
+
+/* ===== 未提出日報チェック（GanttDev Holidaysカレンダー連動） ===== */
+// ↓ 休日一覧取得フロー（新規作成）のHTTPトリガーURLをここに貼ってください
+const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/24f1b9ec8d7a49b7852fd30ef4ee2558/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=wB70BWfshlLe34VNQSegUd67387Ts8tFI5rSDpZuSwI';
+const MISSING_LOOKBACK_DAYS=30;
+function _fmtYmd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+async function fetchHolidaySet(){
+  if(!PA_HOLIDAYS_URL||PA_HOLIDAYS_URL.indexOf('http')!==0)return null;
+  try{
+    const res=await fetch(PA_HOLIDAYS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)return null;
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    const set=new Set();
+    items.forEach(it=>{let d=it.date||it['日付']||it.Date||'';if(d){d=String(d).slice(0,10).replace(/\//g,'-');set.add(d);}});
+    return set;
+  }catch(e){console.warn('休日取得失敗',e);return null;}
+}
+async function findMissingDates(){
+  const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';
+  if(!me)return{me:'',dates:[]};
+  const holidays=await fetchHolidaySet();
+  if(!holidays)return{me,dates:[]};
+  const today=new Date();
+  const to=new Date(today);to.setDate(to.getDate()-1);
+  const from=new Date(today);from.setDate(from.getDate()-MISSING_LOOKBACK_DAYS);
+  let submitted=new Set();
+  try{
+    const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:_fmtYmd(from),dateTo:_fmtYmd(to)})});
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    items.forEach(it=>{if((it.name||'').trim()===me){const d=(it.date||'').slice(0,10);if(d)submitted.add(d);}});
+  }catch(e){console.warn('提出済み取得失敗',e);return{me,dates:[]};}
+  const missing=[];
+  const cur=new Date(from);
+  while(cur<=to){
+    const s=_fmtYmd(cur);const dow=cur.getDay();
+    if(dow!==0&&dow!==6&&!holidays.has(s)&&!submitted.has(s))missing.push(s);
+    cur.setDate(cur.getDate()+1);
+  }
+  return{me,dates:missing};
+}
+async function checkAndShowMissing(){
+  const el=document.getElementById('missing-banner');
+  if(!el)return;
+  let r;try{r=await findMissingDates();}catch(e){return;}
+  const dates=r.dates;
+  if(!dates.length){el.classList.remove('show');return;}
+  const md=s=>{const p=s.split('-');return parseInt(p[1],10)+'/'+parseInt(p[2],10);};
+  const links=dates.slice(0,3).map(s=>'<a onclick="onMissingDateClick(\''+s+'\')">'+md(s)+'</a>').join('、');
+  const extra=dates.length>3?('、他'+(dates.length-3)+'件'):'';
+  el.innerHTML='<span>⚠ 未提出の日報があります：'+links+extra+'</span><button class="mb-close" onclick="this.parentNode.classList.remove(\'show\')" title="閉じる">×</button>';
+  el.classList.add('show');
+}
+function onMissingDateClick(dateStr){document.getElementById('f-date').value=dateStr;window.scrollTo({top:0,behavior:'smooth'});}
 </script>
 <!-- 製番一覧モーダル -->
 <div id="seiban-modal" class="seiban-modal" onclick="if(event.target===this)closeSeibanModal()">
