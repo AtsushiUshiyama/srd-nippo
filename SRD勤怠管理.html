@@ -301,6 +301,7 @@ window.onload=async()=>{
   if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
   await loadData();
   checkAndShowMissing();
+  fetchHolidaySet().then(s=>{HOLIDAY_SET_CACHE=s;renderAll();});
 };
 
 async function loadData(){
@@ -504,15 +505,24 @@ function updatePeriodButtonHighlight(){
 // 作業者フィルター＝全員の時、表示中の期間に勤怠データが1件もないメンバーを表示
 // 退職者は除外する
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
+// 在籍メンバー名簿（日報入力の作業者名と一致させること。退職等で増減したらここを編集）
+const ATTEND_ROSTER=['牛山 厚志','牛山 修二','牛山 滋','藤原 博文','井折 顕太郎','岡本 秀子','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼'];
+let HOLIDAY_SET_CACHE=null;
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
   if(!el)return;
   const nameFilter=document.getElementById('filter-name').value;
   if(nameFilter){el.innerHTML='';return;}
-  // 作業者プルダウンの全option（先頭の「全員」は除く）
-  const sel=document.getElementById('filter-name');
-  const all=[...sel.options].map(o=>o.value).filter(v=>v);
-  if(!all.length){el.innerHTML='';return;}
+  const from=document.getElementById('filter-from').value;
+  const to=document.getElementById('filter-to').value;
+  // 表示範囲が1日だけ、かつその日が休日（土日 or Holidaysリスト）なら未提出は出さない
+  if(from && from===to){
+    const _d=new Date(from+'T00:00:00');const _dow=_d.getDay();
+    const _hol=(_dow===0||_dow===6)||(HOLIDAY_SET_CACHE?HOLIDAY_SET_CACHE.has(from):false);
+    if(_hol){el.innerHTML='';return;}
+  }
+  // 固定の在籍名簿から判定（読み込んだデータに依存しない）
+  const all=ATTEND_ROSTER.slice();
   // 表示中データに含まれる作業者集合
   const present=new Set(f.map(d=>d.name).filter(Boolean));
   const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex)));
