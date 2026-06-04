@@ -882,36 +882,38 @@ function setPeriod(period){
 function filterMe(){
   const ME_KEY='srd_me_name';
   let me=localStorage.getItem(ME_KEY);
-  if(!me){
-    // 現在のデータから作業者リストを取得
-    const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
-    let menu='自分の名前を選択してください（次回からは記憶されます）。\n\n';
-    if(names.length){
-      menu+=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
-      menu+='\n0: 上のリストにない（名前を直接入力）';
-    } else {
-      menu+='（リストが空のため、名前を直接入力してください）';
-    }
-    const input=prompt(menu);
-    if(input===null||input==='')return;
-    if(names.length&&/^\d+$/.test(input.trim())){
-      const idx=parseInt(input,10);
-      if(idx===0){
-        const typed=prompt('自分の名前を入力してください:');
-        if(!typed||!typed.trim())return;
-        me=typed.trim();
-      } else if(idx>=1&&idx<=names.length){
-        me=names[idx-1];
-      } else {
-        alert('無効な番号です。');
-        return;
-      }
-    } else {
-      // 番号形式でなければ名前として扱う
-      me=input.trim();
-    }
-    localStorage.setItem(ME_KEY,me);
+  const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
+  const norm=s=>String(s).replace(/[\s　]/g,'');
+  let menu=(me?('現在の設定：'+me+'\n変更する場合は番号を選択。このままでよければ空欄でEnter。\n\n'):'自分の名前を選択してください（次回からは記憶されます）。\n\n');
+  if(names.length){
+    menu+=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
+    menu+='\n0: 上のリストにない（名前を直接入力）';
+  } else {
+    menu+='（リストが空のため、名前を直接入力してください）';
   }
+  const input=prompt(menu);
+  if(input===null)return;
+  if(input.trim()===''){
+    if(!me)return;
+  } else if(names.length&&/^\d+$/.test(input.trim())){
+    const idx=parseInt(input,10);
+    if(idx===0){
+      const typed=prompt('自分の名前を入力してください（姓と名の間は通常 全角スペース）:');
+      if(!typed||!typed.trim())return;
+      const hit=names.find(n=>norm(n)===norm(typed));
+      me=hit||typed.trim();
+    } else if(idx>=1&&idx<=names.length){
+      me=names[idx-1];
+    } else {
+      alert('無効な番号です。');
+      return;
+    }
+  } else {
+    const hit=names.find(n=>norm(n)===norm(input));
+    me=hit||input.trim();
+  }
+  if(!me)return;
+  localStorage.setItem(ME_KEY,me);
   // プルダウンに該当オプションがなければ一時的に追加
   const sel=document.getElementById('filter-name');
   if(![...sel.options].some(o=>o.value===me)){
