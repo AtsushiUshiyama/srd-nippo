@@ -732,8 +732,9 @@ function filterMe(){
 function changeMe(){
   const ME_KEY='srd_me_name';
   let me=localStorage.getItem(ME_KEY);
-  const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
   const norm=s=>String(s).replace(/[\s　]/g,'');
+  const _exNorm=['牛山修二','岡本秀子'];
+  const names=[...new Set([...(typeof ATTEND_ROSTER!=='undefined'?ATTEND_ROSTER:[]),...allData.map(d=>d.name).filter(Boolean)])].filter(n=>!_exNorm.includes(norm(n))).sort();
   let menu=(me?('現在の設定：'+me+'\n変更する場合は番号を選択。このままでよければ空欄でEnter。\n\n'):'自分の名前を選択してください（次回からは記憶されます）。\n\n');
   if(names.length){
     menu+=names.map((n,i)=>`${i+1}: ${n}`).join('\n');
