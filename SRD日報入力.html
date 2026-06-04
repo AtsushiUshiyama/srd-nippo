@@ -664,6 +664,9 @@ async function loadExistingData(date, name){
     const nameEl=document.getElementById('f-name');
     [...nameEl.options].forEach(o=>{if(o.value===name)o.selected=true;});
     document.getElementById('f-note').value=map['備考']||'';
+    // 勤務区分を復元（新保存はHTML内、無ければ列の値、それも無ければ通常出勤）
+    const kintaiVal=String(map['勤務区分']||item.kintai||item['勤務区分']||'通常出勤').trim();
+    [...document.getElementById('f-kintai').options].forEach(o=>{if(o.value===kintaiVal)o.selected=true;});
     // 勤怠情報セット
     const checkin=(map['出勤']||'09:00');
     const checkout=(map['退勤']||'18:00');
@@ -961,7 +964,7 @@ function checkMatch(){
 }
 function t2m(t){if(!t)return 0;const[h,m]=t.split(':').map(Number);return h*60+m;}
 
-function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows){
+function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows,kintai){
   const chk=v=>v?'✓':'－';
   const rowsHtml=rows.map(r=>
     `<tr>
@@ -977,6 +980,7 @@ function buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commu
 <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
 <tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業日</td><td style="padding:6px 10px;border:1px solid #ddd;">${date}</td>
     <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;width:130px;">作業者名</td><td style="padding:6px 10px;border:1px solid #ddd;">${name}</td></tr>
+<tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">勤務区分</td><td colspan="3" style="padding:6px 10px;border:1px solid #ddd;">${kintai||'通常出勤'}</td></tr>
 <tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">出勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkin}</td>
     <td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">退勤</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;">${checkout}</td></tr>
 <tr><td style="padding:6px 10px;border:1px solid #ddd;background:#f0ede8;font-weight:600;">休憩</td><td style="padding:6px 10px;border:1px solid #ddd;">${breakMin}分</td>
@@ -1061,7 +1065,7 @@ async function saveReport(){
     }
   }catch(e){/* チェック失敗は無視して続行 */}
   showStatus('<span class="spinner"></span> 保存中...','ing');
-  const html=buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows);
+  const html=buildReportHtml(date,name,note,checkin,checkout,breakMin,worktime,commute,lodging,rows,kintai);
   try{
     const res=await fetch(PA_SAVE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date,name,note,checkin:effectiveCheckin,checkout:effectiveCheckout,kintai,breakMin:effectiveBreakMin,worktime:effectiveWorktime,commute:effectiveCommute,lodging:effectiveLodging,rows,html})});
