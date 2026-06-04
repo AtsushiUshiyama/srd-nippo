@@ -1016,7 +1016,7 @@ async function saveReport(){
   let effectiveCheckin=checkin, effectiveCheckout=checkout, effectiveBreakMin=breakMin;
   let effectiveWorktime=worktime, effectiveCommute=commute, effectiveLodging=lodging;
   if(isAbsent){
-    effectiveCheckin=''; effectiveCheckout=''; effectiveBreakMin='';
+    effectiveCheckin=''; effectiveCheckout=''; effectiveBreakMin='0'; // フロー側int()変換対策（空文字だと保存失敗）
     effectiveWorktime=''; effectiveCommute=false; effectiveLodging=false;
     rows=[];
   }
