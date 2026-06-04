@@ -197,6 +197,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 .missing-banner.show{display:flex;}
 .missing-banner a{color:#c0392b;text-decoration:underline;cursor:pointer;font-weight:700;}
 .missing-banner .mb-close{margin-left:auto;cursor:pointer;border:none;background:transparent;color:#c0392b;font-size:18px;line-height:1;padding:0 4px;}
+.kintai-off{opacity:.4;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -609,6 +610,7 @@ window.onload=async()=>{
   if(savedCheckout){document.getElementById('f-checkout').value=savedCheckout;document.getElementById('val-checkout').textContent=savedCheckout;}
   if(savedBreak){document.getElementById('f-break').value=savedBreak;}
   if(savedKintai){document.getElementById('f-kintai').value=savedKintai;}
+  onKintaiChange();
   calcWorkTime();
   await fetchUserName();
 
@@ -667,6 +669,7 @@ async function loadExistingData(date, name){
     // 勤務区分を復元（新保存はHTML内、無ければ列の値、それも無ければ通常出勤）
     const kintaiVal=String(map['勤務区分']||item.kintai||item['勤務区分']||'通常出勤').trim();
     [...document.getElementById('f-kintai').options].forEach(o=>{if(o.value===kintaiVal)o.selected=true;});
+    onKintaiChange();
     // 勤怠情報セット
     const checkin=(map['出勤']||'09:00');
     const checkout=(map['退勤']||'18:00');
@@ -1000,6 +1003,20 @@ ${noteRow}
 </tr></thead>
 <tbody>${rowsHtml}</tbody>
 </table></div>`;
+}
+
+function onKintaiChange(){
+  const isAbsent=['欠勤','休暇'].includes(document.getElementById('f-kintai').value);
+  // 勤怠情報セクション内の各項目（勤務区分プルダウン自体は除外）を無効化
+  const kSec=document.getElementById('f-kintai').closest('.section');
+  const kField=document.getElementById('f-kintai').closest('.field');
+  if(kSec){kSec.querySelectorAll('.field, .check-field').forEach(fld=>{if(fld!==kField)fld.classList.toggle('kintai-off',isAbsent);});}
+  document.querySelectorAll('.time-btn').forEach(b=>b.disabled=isAbsent);
+  const bk=document.getElementById('f-break');if(bk)bk.disabled=isAbsent;
+  // 作業明細セクションを無効化
+  const addBtn=document.querySelector('.add-row-btn');
+  const workBody=addBtn?addBtn.closest('.section-body'):null;
+  if(workBody)workBody.classList.toggle('kintai-off',isAbsent);
 }
 
 async function saveReport(){
