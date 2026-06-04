@@ -231,7 +231,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div id="error-msg"></div>
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
-    <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()" style="height:34px">自分</button></div>
+    <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()" style="height:34px">自分</button><button class="btn btn-secondary" onclick="changeMe()" title="自分の名前を変更" style="height:34px;padding:0 8px;font-size:11px;margin-left:4px;">変更</button></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
@@ -879,7 +879,23 @@ function setPeriod(period){
   applyPeriod();
 }
 
+function applyMe(me){
+  const sel=document.getElementById('filter-name');
+  if(![...sel.options].some(o=>o.value===me)){
+    const opt=document.createElement('option');
+    opt.value=me; opt.textContent=me+'（データなし）';
+    sel.appendChild(opt);
+  }
+  sel.value=me;
+  renderAllSafe();
+}
 function filterMe(){
+  // 1回押したら即適用。未設定のときだけ選択プロンプトを出す
+  const me=localStorage.getItem('srd_me_name');
+  if(!me){changeMe();return;}
+  applyMe(me);
+}
+function changeMe(){
   const ME_KEY='srd_me_name';
   let me=localStorage.getItem(ME_KEY);
   const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
@@ -914,15 +930,7 @@ function filterMe(){
   }
   if(!me)return;
   localStorage.setItem(ME_KEY,me);
-  // プルダウンに該当オプションがなければ一時的に追加
-  const sel=document.getElementById('filter-name');
-  if(![...sel.options].some(o=>o.value===me)){
-    const opt=document.createElement('option');
-    opt.value=me; opt.textContent=me+'（データなし）';
-    sel.appendChild(opt);
-  }
-  sel.value=me;
-  renderAllSafe();
+  applyMe(me);
 }
 
 function clearFilters(){
