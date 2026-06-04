@@ -613,7 +613,13 @@ window.onload=async()=>{
   const params=new URLSearchParams(window.location.search);
   const editDate=params.get('date');
   const editName=params.get('name');
-  if(editDate && editName){
+  const isNewEntry=params.get('new')==='1';
+  if(editDate && editName && isNewEntry){
+    // 未提出日からの新規入力：既存データは参照せず、日付・名前だけセット
+    document.getElementById('f-date').value=editDate;
+    [...document.getElementById('f-name').options].forEach(o=>{if(o.value===editName)o.selected=true;});
+    addRow(); addRow(); addRow();
+  } else if(editDate && editName){
     await loadExistingData(editDate, editName);
   } else {
     addRow(); addRow(); addRow();
@@ -634,6 +640,8 @@ async function loadExistingData(date, name){
     const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
     const item=items[0];
     if(!item){
+      document.getElementById('f-date').value=date;
+      [...document.getElementById('f-name').options].forEach(o=>{if(o.value===name)o.selected=true;});
       alert('データが見つかりませんでした。新規入力モードで開きます。');
       addRow(); addRow(); addRow();
       return;

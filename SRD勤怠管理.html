@@ -901,7 +901,7 @@ async function checkAndShowMissing(){
   el.innerHTML='<span>⚠ 未提出の日報があります：'+links+extra+'</span><button class="mb-close" onclick="this.parentNode.classList.remove(\'show\')" title="閉じる">×</button>';
   el.classList.add('show');
 }
-function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'');window.open(url,'_blank');}
+function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'')+'&new=1';window.open(url,'_blank');}
 </script>
 </body>
 </html>
