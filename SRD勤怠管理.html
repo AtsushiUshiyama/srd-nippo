@@ -222,7 +222,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="filter-sticky">
   <div class="filter-bar">
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
-    <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="filterMe()">自分</button><button class="btn btn-secondary" onclick="changeMe()" title="自分の名前を変更" style="padding:6px 8px;font-size:11px;margin-left:4px;">変更</button></div>
+    <div class="filter-field"><label>&nbsp;</label><div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><button class="btn btn-secondary" id="btn-me">自分</button><span style="font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
     <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
     <div class="filter-actions">
@@ -925,6 +925,22 @@ async function checkAndShowMissing(){
   el.classList.add('show');
 }
 function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'')+'&new=1';window.open(url,'_blank');}
+
+/* 「自分」ボタン：短押し=即適用、長押し=変更 */
+(function(){
+  const btn=document.getElementById('btn-me');
+  if(!btn)return;
+  let timer=null,longFired=false;
+  const start=()=>{if(timer)return;longFired=false;timer=setTimeout(()=>{longFired=true;if(typeof changeMe==='function')changeMe();},600);};
+  const cancel=()=>{if(timer){clearTimeout(timer);timer=null;}};
+  btn.addEventListener('mousedown',start);
+  btn.addEventListener('mouseup',cancel);
+  btn.addEventListener('mouseleave',cancel);
+  btn.addEventListener('touchstart',start,{passive:true});
+  btn.addEventListener('touchend',cancel);
+  btn.addEventListener('touchcancel',cancel);
+  btn.addEventListener('click',function(e){if(longFired){longFired=false;e.preventDefault();e.stopImmediatePropagation();return;}if(typeof filterMe==='function')filterMe();});
+})();
 </script>
 </body>
 </html>
