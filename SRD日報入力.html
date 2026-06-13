@@ -630,6 +630,7 @@ window.onload=async()=>{
     addRow(); addRow(); addRow();
   }
   drawClock();
+  autofillFirstRowWorktime();
   checkAndShowMissing();
 };
 
@@ -764,6 +765,33 @@ function showSeibanName(el,name){
   }
 }
 
+// 実働時間が更新されたら、2行目以降が未入力のとき1行目の作業時間へ自動セット
+function rowHasData(row){
+  if(!row)return false;
+  const durEl=row.querySelector('[data-field="dur"]');
+  if(durEl&&(parseInt(durEl.dataset.min)||0)>0)return true;
+  const v=sel=>{const e=row.querySelector(sel);return e?String(e.value||'').trim():'';};
+  if(v('[data-field="seiban"]'))return true;
+  if(v('[data-field="type"]'))return true;
+  if(v('[data-field="detail"]'))return true;
+  if(v('[data-field="progress"]'))return true;
+  return false;
+}
+function autofillFirstRowWorktime(){
+  const wm=parseInt(document.getElementById('f-worktime').dataset.min)||0;
+  if(wm<=0)return;
+  const rows=document.querySelectorAll('.work-row');
+  if(!rows.length)return;
+  // 2行目以降に何か入力があれば対象外（手動で按分している場合は触らない）
+  for(let i=1;i<rows.length;i++){ if(rowHasData(rows[i]))return; }
+  const btn=rows[0].querySelector('[data-field="dur"]');
+  if(!btn)return;
+  const h=Math.floor(wm/60), m=wm%60;
+  btn.textContent=(h>0?h+'h ':'')+fmt2(m)+'m';
+  btn.dataset.min=wm;
+  calcTotal();
+}
+
 function calcWorkTime(){
   const ci=document.getElementById('f-checkin').value;
   const co=document.getElementById('f-checkout').value;
@@ -782,6 +810,7 @@ function calcWorkTime(){
       document.getElementById('total-work').textContent='—';
     }
   }
+  autofillFirstRowWorktime();
   checkMatch();
 }
 function mToStr(m){return Math.floor(m/60)+'h '+(m%60)+'m';}
