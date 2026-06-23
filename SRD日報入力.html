@@ -1317,6 +1317,18 @@ async function checkAndShowMissing(){
   el.classList.add('show');
 }
 function onMissingDateClick(dateStr){document.getElementById('f-date').value=dateStr;window.scrollTo({top:0,behavior:'smooth'});}
+
+/* 統合シェル(iframe)への埋め込み対応：?embed=1 でヘッダ非表示＋共通ヘルプ受信 */
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get('embed')==='1'){
+      const h=document.querySelector('.header'); if(h)h.style.display='none';
+    }
+  }catch(e){}
+  window.addEventListener('message',function(e){
+    if(e&&e.data&&e.data.srd==='openHelp'){ if(typeof openHelp==='function')openHelp(); }
+  });
+})();
 </script>
 <!-- 製番一覧モーダル -->
 <div id="seiban-modal" class="seiban-modal" onclick="if(event.target===this)closeSeibanModal()">

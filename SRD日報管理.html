@@ -1080,6 +1080,18 @@ function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name'
   btn.addEventListener('touchcancel',cancel);
   btn.addEventListener('click',function(e){if(longFired){longFired=false;e.preventDefault();e.stopImmediatePropagation();return;}if(typeof filterMe==='function')filterMe();});
 })();
+
+/* 統合シェル(iframe)への埋め込み対応：?embed=1 でヘッダ非表示＋共通ヘルプ受信 */
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get('embed')==='1'){
+      const h=document.querySelector('.header'); if(h)h.style.display='none';
+    }
+  }catch(e){}
+  window.addEventListener('message',function(e){
+    if(e&&e.data&&e.data.srd==='openHelp'){ if(typeof openHelp==='function')openHelp(); }
+  });
+})();
 </script>
 </body>
 </html>
