@@ -1327,6 +1327,7 @@ function onMissingDateClick(dateStr){document.getElementById('f-date').value=dat
   }catch(e){}
   window.addEventListener('message',function(e){
     if(e&&e.data&&e.data.srd==='openHelp'){ if(typeof openHelp==='function')openHelp(); }
+    if(e&&e.data&&e.data.srd==='reload'){ if(typeof reloadData==='function')reloadData(); }
   });
 })();
 </script>

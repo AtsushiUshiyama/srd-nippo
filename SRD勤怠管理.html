@@ -130,6 +130,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 .missing-banner.show{display:flex;}
 .missing-banner a{color:#c0392b;text-decoration:underline;cursor:pointer;font-weight:700;}
 .missing-banner .mb-close{margin-left:auto;cursor:pointer;border:none;background:transparent;color:#c0392b;font-size:18px;line-height:1;padding:0 4px;}
+.filter-field input.date-custom{border-color:#d97706;box-shadow:0 0 0 2px rgba(217,119,6,.25);background:#fffbeb;}
 </style>
 </head>
 <body>
@@ -235,6 +236,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
       <button class="btn btn-secondary" id="btn-period-1m" onclick="setPeriod('1m')">直近1か月</button>
+      <button class="btn btn-secondary" id="btn-period-2m" onclick="setPeriod('2m')">直近2か月</button>
       <button class="btn btn-secondary" id="btn-period-shimeM" onclick="setPeriod('shimeM')">末締め</button>
       <button class="btn btn-secondary" id="btn-period-shime15" onclick="setPeriod('shime15')">15日締め</button>
       <button class="btn btn-secondary" id="btn-period-shime20" onclick="setPeriod('shime20')">20日締め</button>
@@ -475,9 +477,10 @@ function updatePeriodButtonHighlight(){
   const to=document.getElementById('filter-to').value;
   // 日付欄の範囲が前回ロード時の範囲に収まっている（=allDataで表示可能）ならハイライト対象
   const loaded=(lastLoadedFrom!==''&&from>=lastLoadedFrom&&to<=lastLoadedTo);
-  const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-shime15','btn-period-shime20','btn-period-shimeM','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
+  const ids=['btn-period-all','btn-period-1y','btn-period-1m','btn-period-2m','btn-period-shime15','btn-period-shime20','btn-period-shimeM','btn-day-0','btn-day-1','btn-day-2','btn-day-3','btn-day-4','btn-day-5'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
-  if(!loaded)return;
+  const _dF=document.getElementById('filter-from'),_dT=document.getElementById('filter-to');_dF.classList.remove('date-custom');_dT.classList.remove('date-custom');
+  if(!loaded){_dF.classList.add('date-custom');_dT.classList.add('date-custom');return;}
   const today=new Date();
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const todayStr=fmt(today);
@@ -487,6 +490,8 @@ function updatePeriodButtonHighlight(){
   if(from===oneYearAgo&&to===todayStr){document.getElementById('btn-period-1y').classList.add('active');return;}
   const oneMonthAgo=fmt(new Date(today.getFullYear(),today.getMonth()-1,today.getDate()));
   if(from===oneMonthAgo&&to===todayStr){document.getElementById('btn-period-1m').classList.add('active');return;}
+  const twoMonthAgo=fmt(new Date(today.getFullYear(),today.getMonth()-2,today.getDate()));
+  if(from===twoMonthAgo&&to===todayStr){document.getElementById('btn-period-2m').classList.add('active');return;}
   // 15日締め
   const shime15From=fmt(new Date(today.getFullYear(),today.getMonth()-1,16));
   const shime15To=fmt(new Date(today.getFullYear(),today.getMonth(),15));
@@ -506,6 +511,7 @@ function updatePeriodButtonHighlight(){
       if(from===fmt(d)){document.getElementById('btn-day-'+i).classList.add('active');return;}
     }
   }
+  _dF.classList.add('date-custom');_dT.classList.add('date-custom');
 }
 
 // 作業者フィルター＝全員の時、表示中の期間に勤怠データが1件もないメンバーを表示
@@ -779,6 +785,8 @@ function setPeriod(period){
     from=fmtDate(new Date(today.getFullYear()-1,today.getMonth(),today.getDate()));
   }else if(period==='1m'){
     from=fmtDate(new Date(today.getFullYear(),today.getMonth()-1,today.getDate()));
+  }else if(period==='2m'){
+    from=fmtDate(new Date(today.getFullYear(),today.getMonth()-2,today.getDate()));
   }else if(period==='shime15'){
     // 15日締め：前月16日〜当月15日
     const fromD=new Date(today.getFullYear(),today.getMonth()-1,16);
@@ -955,6 +963,7 @@ function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name'
   }catch(e){}
   window.addEventListener('message',function(e){
     if(e&&e.data&&e.data.srd==='openHelp'){ if(typeof openHelp==='function')openHelp(); }
+    if(e&&e.data&&e.data.srd==='reload'){ if(typeof reloadData==='function')reloadData(); }
   });
 })();
 </script>
