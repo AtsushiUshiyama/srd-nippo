@@ -248,6 +248,9 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <h4>基本の流れ</h4>
     <p>① 日付・作業者を選ぶ → ② 出勤・退勤時刻を入れる → ③ 作業明細（製番・略称・時間など）を入力 → ④「保存」</p>
 
+    <h4>🏢 ワークスペース（統合画面）</h4>
+    <p>共通ヘッダのタブ（日報入力／日報管理／勤怠管理）で画面を切替。会社ロゴのクリックで社内ツール一覧（工程・カレンダー・製番マスタ等）が開きます。右上の<strong>更新</strong>は表示中画面を今の条件のまま最新化、<strong>？</strong>は表示中画面のヘルプです。</p>
+
     <h4>⚠ 未提出の日報</h4>
     <p>過去30日にあなたの未提出日があると、開いた時に上部へ赤い帯で「未提出の日報があります：5/28、5/29…」と表示されます。日付をクリックするとその日の新規入力になります。作業者名を一度選ぶと記憶され、その人の未提出が出ます（土日・休日は対象外）。</p>
 
@@ -272,7 +275,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
       <li><strong>製番</strong>：4桁数字を直接入力、または「検索」ボタンで案件一覧から選択。顧客フィルタ付。<br>※desknet's NEO 製番と連動。</li>
       <li><strong>略称</strong>：プルダウンから選ぶ</li>
       <li><strong>作業種別</strong>：プルダウンから選ぶ</li>
-      <li><strong>時間</strong>：作業に費やした時間（分単位、15分刻み推奨）</li>
+      <li><strong>時間</strong>：作業に費やした時間（分単位、15分刻み推奨）。<strong>2行目以降が空のときは実働時間が1行目に自動セット</strong>されます。</li>
       <li><strong>×</strong>：行を削除</li>
       <li><strong>＋作業を追加</strong>：行は何行でも追加できます。</li>
     </ul>
@@ -284,6 +287,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
     <ul>
       <li><strong>保存</strong>：入力内容をSharePointに送信</li>
       <li><strong>リセット</strong>：入力をすべてクリア（保存はされない）</li>
+      <li>保存すると、次回は<strong>出勤・退勤・休憩が前回の値で開始</strong>します（欠勤・休暇時は記録しません）。</li>
     </ul>
 
     <h4>困った時</h4>

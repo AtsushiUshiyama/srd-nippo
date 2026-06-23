@@ -175,14 +175,17 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <li><strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く</li>
     </ol>
 
+    <h4>🏢 ワークスペース（統合画面）</h4>
+    <p>共通ヘッダのタブ（日報入力／日報管理／勤怠管理）で画面を切替。会社ロゴのクリックで社内ツール一覧（工程・カレンダー・製番マスタ等）が開きます。右上の<strong>更新</strong>は表示中画面を今の条件のまま最新化、<strong>？</strong>は表示中画面のヘルプです。</p>
+
     <h4>⚠ 未提出の日報（自分）</h4>
     <p>「自分」を設定していると、過去30日にあなた自身の未提出日があるとき上部へ赤い帯で表示されます。日付をクリックすると、その日の日報を新規入力する画面が別タブで開きます（土日・休日は対象外）。</p>
 
     <h4>期間フィルタ</h4>
-    <p>開いた直後は<strong>本日のみ</strong>を表示。上部のボタンで期間を一発セットできます。</p>
+    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>上段＝作業者・略称など／下段＝日付・期間ボタン</strong>の2段構成（スクロールしても固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
-      <li><strong>直近1年</strong>／<strong>直近1か月</strong></li>
+      <li><strong>直近1年</strong>／<strong>直近2か月</strong>／<strong>直近1か月</strong></li>
       <li><strong>末締め</strong>：前月1日〜末日</li>
       <li><strong>15日締め</strong>：前月16日〜当月15日</li>
       <li><strong>20日締め</strong>：前月21日〜当月20日</li>
@@ -192,7 +195,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <h4>作業者・略称・作業種別・製番フィルタ</h4>
     <ul>
       <li><strong>作業者</strong>：プルダウンで全員／個別作業者を選択。<strong>自分</strong>ボタンは1回押すと自分だけ表示（記憶）、<strong>長押し</strong>で名前の設定・変更ができる。</li>
-      <li><strong>略称</strong>：顧客略称（<code>[A-Z]{3}</code>）で絞り込み</li>
+      <li><strong>略称</strong>：顧客略称（<code>[A-Z]{3}</code>）で絞り込み。プルダウンには<strong>略号＋正式社名</strong>（例：AVR 株式会社エビア）を表示。</li>
       <li><strong>作業種別</strong>：作業種別で絞り込み</li>
       <li><strong>製番</strong>：4桁の数字で絞り込み（部分一致）</li>
     </ul>
@@ -207,7 +210,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     </ul>
 
     <h4>編集</h4>
-    <p>作業明細一覧の行をクリックして選択 → 上部の<strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く。</p>
+    <p>作業明細一覧の行をクリックして選択 → 上部の<strong>編集</strong>ボタンを押すと、その日の日報を日報入力で開く。統合ワークスペースでは<strong>日報入力タブ内</strong>で開きます。</p>
 
     <h4>📊 製番レポート</h4>
     <p>製番フィルタに4桁を入れて、表示中データが<strong>1つの製番に絞られた時のみ</strong>表示される。</p>
@@ -222,8 +225,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <h4>レポートCSV出力</h4>
     <p>📊 製番レポートが表示されているとき（=製番1つに絞られているとき）のみ有効。レポート内容をCSVで出力。</p>
 
-    <h4>再読み込み</h4>
-    <p>SharePointのデータが更新された時に、最新のデータを取り直すためのボタン。</p>
+    <h4>更新（最新化）</h4>
+    <p>SharePointのデータが更新された時は、共通ヘッダの<strong>更新</strong>（単独で開いた時はF5）で、<strong>今の絞り込み条件のまま</strong>最新データを取り直せます。</p>
 
     <h4>困った時</h4>
     <ul>
