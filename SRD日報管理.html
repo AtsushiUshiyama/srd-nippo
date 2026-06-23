@@ -241,7 +241,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-row">
     <div class="filter-field" style="width:120px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
     <div class="filter-field"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
+    <div class="filter-field" style="width:260px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
