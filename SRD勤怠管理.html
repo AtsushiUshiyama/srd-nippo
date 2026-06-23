@@ -575,6 +575,7 @@ function selectRow(tr, date, name){
 // 編集画面を開く
 function openEdit(){
   if(!selectedDate||!selectedName)return;
+  if(new URLSearchParams(location.search).get('embed')==='1'){window.parent.postMessage({srd:'openEdit',date:selectedDate,name:selectedName},'*');return;}
   const url='SRD日報入力.html?date='+encodeURIComponent(selectedDate)+'&name='+encodeURIComponent(selectedName);
   window.open(url,'_blank');
 }
@@ -936,7 +937,7 @@ async function checkAndShowMissing(){
   el.innerHTML='<span>⚠ 未提出の日報があります：'+links+extra+'</span><button class="mb-close" onclick="this.parentNode.classList.remove(\'show\')" title="閉じる">×</button>';
   el.classList.add('show');
 }
-function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'')+'&new=1';window.open(url,'_blank');}
+function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';if(new URLSearchParams(location.search).get('embed')==='1'){window.parent.postMessage({srd:'openEdit',date:dateStr,name:me,isNew:true},'*');return;}const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'')+'&new=1';window.open(url,'_blank');}
 
 /* 「自分」ボタン：短押し=即適用、長押し=変更 */
 (function(){
