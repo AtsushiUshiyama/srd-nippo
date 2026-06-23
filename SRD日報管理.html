@@ -13,12 +13,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .header-logo{height:44px;width:44px;object-fit:contain;border-radius:4px;background:#fff;padding:2px;flex-shrink:0;}
 .header h1{font-size:17px;font-weight:500;letter-spacing:.06em;}
 .header-sub{font-size:12px;color:#aaa;margin-left:auto;font-family:var(--mono);}
-.main{max-width:1400px;margin:0 auto;padding:24px 20px 80px;}
-.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;display:flex;flex-direction:column;align-items:stretch;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
+.main{max-width:1400px;margin:0 auto;padding:0 20px 80px;}
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;display:flex;flex-direction:column;align-items:stretch;gap:12px;}
 .filter-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.filter-row-date .filter-actions{margin-left:0;gap:6px;}
+.filter-row-date .filter-actions .btn{padding:5px 9px;font-size:12px;}
+.filter-sticky{position:sticky;top:0;z-index:100;background:var(--bg);padding-top:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
 .filter-field{display:flex;flex-direction:column;gap:5px;}
 .filter-field label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.06em;}
-.filter-field select,.filter-field input{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;height:34px;box-sizing:border-box;}
+.filter-field select,.filter-field input{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;outline:none;height:34px;box-sizing:border-box;width:100%;}
 .filter-field.wide{flex:2;}
 .filter-field select:focus,.filter-field input:focus{border-color:var(--border-focus);}
 .filter-actions{display:flex;gap:8px;margin-left:auto;align-items:flex-end;}
@@ -232,9 +235,10 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 <div class="main">
   <div id="missing-banner" class="missing-banner"></div>
   <div id="error-msg"></div>
+  <div class="filter-sticky">
   <div class="filter-bar">
     <div class="filter-row">
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
+    <div class="filter-field" style="width:120px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
     <div class="filter-field"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
     <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
@@ -242,8 +246,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     </div>
     <div class="filter-row filter-row-date">
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
-    <div class="filter-field" style="min-width:130px;max-width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
+    <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
+    <div class="filter-field" style="width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
@@ -257,12 +261,9 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-day-3" onclick="filterDay(3)">3日前</button>
       <button class="btn btn-secondary" id="btn-day-4" onclick="filterDay(4)">4日前</button>
       <button class="btn btn-secondary" id="btn-day-5" onclick="filterDay(5)">5日前</button>
-      <button class="btn btn-primary" onclick="reloadData()">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
-        再読み込み
-      </button>
     </div>
     </div>
+  </div>
   </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
 
