@@ -252,8 +252,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-actions">
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
-      <button class="btn btn-secondary" id="btn-period-1m" onclick="setPeriod('1m')">直近1か月</button>
       <button class="btn btn-secondary" id="btn-period-2m" onclick="setPeriod('2m')">直近2か月</button>
+      <button class="btn btn-secondary" id="btn-period-1m" onclick="setPeriod('1m')">直近1か月</button>
       <button class="btn btn-secondary" id="btn-period-shimeM" onclick="setPeriod('shimeM')">末締め</button>
       <button class="btn btn-secondary" id="btn-period-shime15" onclick="setPeriod('shime15')">15日締め</button>
       <button class="btn btn-secondary" id="btn-period-shime20" onclick="setPeriod('shime20')">20日締め</button>
@@ -333,6 +333,7 @@ window.onload=async()=>{
   await loadData();
   checkAndShowMissing();
   fetchHolidaySet().then(s=>{HOLIDAY_SET_CACHE=s;renderAllSafe();});
+  loadCustomerMap();
 };
 
 async function loadData(){
@@ -466,6 +467,23 @@ function parseReportHtml(html){
   }
 }
 
+// 顧客マスタ（略号→正式社名）。フロー未設定なら空マップ（従来どおり略号のみ表示）
+let CUSTOMER_MAP={};
+const PA_CUSTOMERS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/0fd35de1b5294400a327eb7275fad980/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=uIia4BJ_wnk8WJsYKNXYWZVFTzzWcrmOjofgybwIA64';
+async function loadCustomerMap(){
+  if(!PA_CUSTOMERS_URL||PA_CUSTOMERS_URL.indexOf('http')!==0)return;
+  try{
+    const res=await fetch(PA_CUSTOMERS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)return;
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    const m={};
+    items.forEach(it=>{const code=String(it.ryaku||it.field_1||'').trim().toUpperCase();const name=String(it.name||it.field_3||'').trim();if(code)m[code]=name;});
+    CUSTOMER_MAP=m;
+    populateFilters();
+  }catch(e){console.warn('顧客マスタ取得失敗',e);}
+}
+
 function populateFilters(){
   const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
   const ns=document.getElementById('filter-name');
@@ -477,7 +495,9 @@ function populateFilters(){
     if(r.kojimei&&r.kojimei.length>=8){const v=r.kojimei.substring(5,8);if(/^[A-Z]{3}$/.test(v))ryakushoSet.add(v);}
   }));
   const rs=document.getElementById('filter-ryakusho');
-  rs.innerHTML='<option value="">全略称</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}</option>`).join('');
+  const curRy=rs.value;
+  rs.innerHTML='<option value="">全略称</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}${CUSTOMER_MAP[v]?(' '+CUSTOMER_MAP[v]):''}</option>`).join('');
+  rs.value=curRy;
   // 作業種別を抽出
   const typeSet=new Set();
   allData.forEach(d=>d.rows.forEach(r=>{
