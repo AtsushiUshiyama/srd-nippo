@@ -418,7 +418,9 @@ function parseReportHtml(html){
 function populateFilters(){
   const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
   const ns=document.getElementById('filter-name');
+  const curName=ns.value;
   ns.innerHTML='<option value="">全員</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  ns.value=curName;
 
 }
 

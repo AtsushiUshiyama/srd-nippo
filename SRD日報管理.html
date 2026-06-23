@@ -490,7 +490,9 @@ async function loadCustomerMap(){
 function populateFilters(){
   const names=[...new Set(allData.map(d=>d.name).filter(Boolean))].sort();
   const ns=document.getElementById('filter-name');
+  const curName=ns.value;
   ns.innerHTML='<option value="">全員</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  ns.value=curName;
   // 製番はテキスト入力のため動的生成不要
   // 案件名から大文字3文字の略称を抽出
   const ryakushoSet=new Set();
