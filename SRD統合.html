@@ -127,11 +127,26 @@ const TOOLS=[
   {key:'knowledge',name:'ナレッジ',icon:'📚',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8.aspx?env=Embedded'},
   {key:'mbti',name:'MBTI',icon:'🧭',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E6%80%A7%E6%A0%BC%E3%82%BF%E3%82%A4%E3%83%97%E3%83%9E%E3%83%83%E3%83%97.aspx?env=Embedded'},
 ];
+/* AppLauncher 連携: 公開 apps.json を読んでランチャー一覧を差し替える。
+   失敗時は上の TOOLS(フォールバック)のまま。
+   自分自身の3画面(日報入力/日報管理/勤怠管理)は内部view切替に変換する。 */
+const OWN_VIEWS={'nippo-input':'input','nippo-admin':'nippo','kintai':'kintai'};
+const APPS_JSON_URL='https://srdlauncher.blob.core.windows.net/launcher/apps.json';
+let tools=TOOLS; // 既定はフォールバック
+fetch(APPS_JSON_URL+'?t='+Date.now(),{cache:'no-cache'})
+  .then(r=>{if(!r.ok)throw new Error('apps.json '+r.status);return r.json();})
+  .then(list=>{
+    if(!Array.isArray(list)||!list.length)return;
+    tools=list.map(t=>OWN_VIEWS[t.key]
+      ? {key:t.key,name:t.name,icon:t.icon,view:OWN_VIEWS[t.key]}
+      : {key:t.key,name:t.name,icon:t.icon,url:t.url});
+  })
+  .catch(()=>{/* フォールバック維持 */});
 const tlPanel=document.getElementById('tl-panel'),tlOverlay=document.getElementById('tl-overlay'),tlList=document.getElementById('tl-list');
 function renderTools(){
   const cur=body.dataset.view;
-  tlList.innerHTML=TOOLS.map(t=>{const isCur=t.view&&t.view===cur;return '<li><a class="tl-item'+(isCur?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur?'<span class="tl-badge">現在</span>':'')+'</a></li>';}).join('');
-  [...tlList.querySelectorAll('.tl-item')].forEach(a=>{a.addEventListener('click',()=>{const t=TOOLS.find(x=>x.key===a.dataset.key);if(t.view){body.dataset.view=t.view;localStorage.setItem('srd-ws-view',t.view);apply();closeTL();}else if(t.url){window.open(t.url,'_blank','noopener,noreferrer');closeTL();}});});
+  tlList.innerHTML=tools.map(t=>{const isCur=t.view&&t.view===cur;return '<li><a class="tl-item'+(isCur?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur?'<span class="tl-badge">現在</span>':'')+'</a></li>';}).join('');
+  [...tlList.querySelectorAll('.tl-item')].forEach(a=>{a.addEventListener('click',()=>{const t=tools.find(x=>x.key===a.dataset.key);if(t.view){body.dataset.view=t.view;localStorage.setItem('srd-ws-view',t.view);apply();closeTL();}else if(t.url){window.open(t.url,'_blank','noopener,noreferrer');closeTL();}});});
 }
 function openTL(){renderTools();tlOverlay.classList.add('show');tlPanel.classList.add('show');}
 function closeTL(){tlOverlay.classList.remove('show');tlPanel.classList.remove('show');}
