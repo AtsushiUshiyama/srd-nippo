@@ -151,6 +151,7 @@ const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environm
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼'];
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 
+const OPERATION_START='2026-05-25'; // 正式運用開始日（これより前は判定しない）
 let MODE='me';           // 'me' | 'all'
 let curY, curM;          // 表示中の年・月(0-11)
 let HOLIDAY_SET=null;    // Set(YYYY-MM-DD)
@@ -235,7 +236,7 @@ function render(){
     if(dateStr===todayStr)cell.classList.add('today-ring');
 
     const workday=isWorkday(dateStr,dow);
-    const isPast = dateObj<=yesterday;
+    const isPast = dateObj<=yesterday && dateStr>=OPERATION_START;
 
     if(!workday){
       cell.classList.add('off');
@@ -263,10 +264,9 @@ function render(){
           cell.classList.add('ok');
           const t=document.createElement('div'); t.className='tag tag-ok'; t.textContent='全員提出'; cell.appendChild(t);
         } else {
-          cell.classList.add('miss','workday'); missCount+=missing.length;
+          cell.classList.add('miss'); missCount+=missing.length;
           const t=document.createElement('div'); t.className='tag'; t.innerHTML='<span class="badge-count">未'+missing.length+'</span>'; cell.appendChild(t);
           const nm=document.createElement('div'); nm.className='names'; nm.textContent=missing.join('・'); cell.appendChild(nm);
-          cell.onclick=()=>onDateClick(dateStr);
         }
       }
     }
