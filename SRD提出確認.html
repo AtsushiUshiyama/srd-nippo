@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提出確認</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root{--accent:#1a3a5c;--bg:#f5f4f0;--surface:#ffffff;--border:#e0dbd2;--text:#1a1a1a;--text-muted:#6b7280;--sans:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI","Meiryo",sans-serif;--mono:"DM Mono","Consolas",monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);}
+
+.header{background:var(--accent);color:#fff;padding:10px 28px;display:flex;align-items:center;gap:14px;}
+.header-logo{height:44px;width:44px;border-radius:6px;background:#fff;color:var(--accent);font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.header h1{font-size:17px;font-weight:500;letter-spacing:.06em;}
+.header-sub{font-size:12px;color:#aaa;font-family:var(--mono);}
+.help-btn{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.help-btn:hover{background:rgba(255,255,255,.28);}
+
+.main{max-width:1000px;margin:0 auto;padding:20px 20px 80px;}
+
+.bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.seg{display:inline-flex;background:#eee7db;border-radius:8px;padding:3px;}
+.seg button{border:none;background:transparent;color:var(--accent);font-family:var(--sans);font-size:13px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;}
+.seg button.active{background:var(--accent);color:#fff;}
+.nav{display:flex;align-items:center;gap:10px;}
+.nav button{border:1px solid var(--border);background:#fff;color:var(--accent);font-size:16px;width:34px;height:34px;border-radius:8px;cursor:pointer;line-height:1;}
+.nav button:hover{background:#f0ede8;}
+.nav .month-label{font-size:16px;font-weight:600;min-width:130px;text-align:center;}
+.today-btn{border:1px solid var(--border);background:#fff;color:var(--accent);font-size:13px;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;}
+.me-box{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);}
+.me-box b{color:var(--text);}
+.me-box button{border:1px solid var(--border);background:#fff;color:var(--accent);font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;cursor:pointer;}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--text-muted);}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.lg-miss{background:#fdecea;border:1px solid #e5988f;}
+.lg-ok{background:#eafaf0;border:1px solid #9cd5b3;}
+.lg-off{background:#f0f0f0;border:1px solid #ddd;}
+
+.cal{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:#f7f4ee;border-bottom:1px solid var(--border);}
+.cal-head div{padding:8px 0;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);}
+.cal-head div.sun{color:#c0392b;}
+.cal-head div.sat{color:#2563eb;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.cell{min-height:78px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 6px 4px;position:relative;font-size:13px;}
+.cell:nth-child(7n){border-right:none;}
+.cell .dnum{font-weight:600;color:var(--text);font-size:13px;}
+.cell.blank{background:#fafafa;}
+.cell.off{background:#f3f3f3;}
+.cell.off .dnum{color:#aaa;}
+.cell.future .dnum{color:#b7b7b7;}
+.cell.ok{background:#f3fbf6;}
+.cell.miss{background:#fdecea;cursor:pointer;}
+.cell.miss:hover{background:#fbddd8;}
+.cell.miss .dnum{color:#c0392b;}
+.cell.workday{cursor:pointer;}
+.cell.workday:hover{outline:2px solid #c9c1b3;outline-offset:-2px;}
+.tag{position:absolute;bottom:5px;left:6px;right:6px;font-size:11px;line-height:1.2;}
+.tag-miss{color:#c0392b;font-weight:700;}
+.tag-ok{color:#2f855a;font-weight:600;}
+.badge-count{display:inline-block;background:#c0392b;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;}
+.names{font-size:10px;color:#c0392b;margin-top:2px;word-break:break-all;line-height:1.15;max-height:34px;overflow:hidden;}
+.today-ring{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px;}
+.status{font-size:13px;color:var(--text-muted);margin:8px 2px;}
+.summary{margin-top:14px;font-size:14px;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
+.summary b{color:#c0392b;}
+
+/* ヘルプ */
+.help-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;}
+.help-overlay.show{display:block;}
+.help-panel{display:none;position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:#fff;box-shadow:-4px 0 16px rgba(0,0,0,.2);z-index:901;flex-direction:column;}
+.help-panel.show{display:flex;}
+.help-panel-head{background:var(--accent);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;}
+.help-panel-title{font-size:15px;font-weight:600;}
+.help-panel-close{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;}
+.help-body{padding:16px 20px;overflow-y:auto;font-size:14px;line-height:1.7;}
+.help-body h4{margin:14px 0 4px;font-size:14px;color:var(--accent);}
+.help-body p{margin:0 0 8px;color:#333;}
+
+@media(max-width:600px){
+  .cell{min-height:60px;}
+  .names{display:none;}
+  .main{padding:12px 10px 60px;}
+}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-logo">S</div>
+    <h1>提出確認</h1>
+    <span class="header-sub">v1.0.0</span>
+    <button class="help-btn" onclick="openHelp()" title="ヘルプ">?</button>
+  </div>
+
+  <div class="main">
+    <div class="bar">
+      <div class="seg">
+        <button id="seg-me" class="active" onclick="setMode('me')">自分</button>
+        <button id="seg-all" onclick="setMode('all')">全員</button>
+      </div>
+      <div class="nav">
+        <button onclick="moveMonth(-1)" title="前の月">‹</button>
+        <span class="month-label" id="month-label">—</span>
+        <button onclick="moveMonth(1)" title="次の月">›</button>
+      </div>
+      <button class="today-btn" onclick="goToday()">今月</button>
+      <div class="me-box" id="me-box"></div>
+    </div>
+
+    <div class="legend">
+      <span><i class="lg-miss"></i>未提出</span>
+      <span><i class="lg-ok"></i>提出済み</span>
+      <span><i class="lg-off"></i>休日（土日・会社休業日）</span>
+    </div>
+
+    <div class="status" id="status">読み込み中…</div>
+    <div class="cal">
+      <div class="cal-head">
+        <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <!-- ヘルプ -->
+  <div class="help-overlay" id="help-overlay" onclick="closeHelp()"></div>
+  <div class="help-panel" id="help-panel">
+    <div class="help-panel-head"><span class="help-panel-title">📖 提出確認の使い方</span><button class="help-panel-close" onclick="closeHelp()">×</button></div>
+    <div class="help-body">
+      <h4>これは何？</h4>
+      <p>日報の<strong>未提出日をカレンダーで一目で確認</strong>するツールです。</p>
+      <h4>自分／全員</h4>
+      <p><strong>自分</strong>：自分（「自分」設定の人）の未提出日を赤で表示。<strong>全員</strong>：各日の未提出人数と名前を表示（管理者向け）。</p>
+      <h4>色の意味</h4>
+      <p>赤＝未提出／緑＝提出済み／灰＝休日（土日・会社休業日は対象外）。判定は前日までの営業日が対象です。</p>
+      <h4>日付クリック</h4>
+      <p>赤い日をクリックすると、その日の日報入力が開きます（統合画面では日報入力タブ内で開きます）。</p>
+      <h4>「自分」設定</h4>
+      <p>自分表示は「自分」を設定した人にだけ効きます。右上の「自分を設定」から選べます。</p>
+    </div>
+  </div>
+
+<script>
+const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8b7174c6210f41a9b50a3e7796579d6e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nCORL5zEr7xEodhJd-_DDo4L4RGBcTnPiOxUpksQ2jo';
+const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/24f1b9ec8d7a49b7852fd30ef4ee2558/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=wB70BWfshlLe34VNQSegUd67387Ts8tFI5rSDpZuSwI';
+const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼'];
+const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
+
+let MODE='me';           // 'me' | 'all'
+let curY, curM;          // 表示中の年・月(0-11)
+let HOLIDAY_SET=null;    // Set(YYYY-MM-DD)
+let SUBMIT_MAP={};       // date(YYYY-MM-DD) -> Set(name)
+let ME='';
+
+function pad2(n){return String(n).padStart(2,'0');}
+function fmtYmd(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function norm(s){return String(s).replace(/[\s　]/g,'');}
+function getMe(){return localStorage.getItem('srd_me_name')||localStorage.getItem('dr-username')||'';}
+
+async function fetchHolidaySet(){
+  if(HOLIDAY_SET)return HOLIDAY_SET;
+  try{
+    const res=await fetch(PA_HOLIDAYS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)return null;
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    const set=new Set();
+    items.forEach(it=>{let d=it.date||it['日付']||it.Date||'';if(d){d=String(d).slice(0,10).replace(/\//g,'-');set.add(d);}});
+    HOLIDAY_SET=set; return set;
+  }catch(e){console.warn('休日取得失敗',e);return null;}
+}
+
+async function fetchMonthSubmissions(fromStr,toStr){
+  const map={};
+  try{
+    const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:fromStr,dateTo:toStr})});
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    items.forEach(it=>{const d=String(it.date||'').slice(0,10);const nm=String(it.name||'').trim();if(d&&nm){(map[d]=map[d]||new Set()).add(nm);}});
+  }catch(e){console.warn('提出データ取得失敗',e);}
+  return map;
+}
+
+function roster(){ return ATTEND_ROSTER.filter(n=>!MISSING_EXCLUDE.some(ex=>n.includes(ex))); }
+
+async function loadMonth(){
+  ME=getMe();
+  renderMeBox();
+  const first=new Date(curY,curM,1);
+  const last=new Date(curY,curM+1,0);
+  document.getElementById('month-label').textContent=curY+'年'+(curM+1)+'月';
+  document.getElementById('status').textContent='読み込み中…';
+  const [hol,sub]=await Promise.all([fetchHolidaySet(), fetchMonthSubmissions(fmtYmd(first),fmtYmd(last))]);
+  SUBMIT_MAP=sub;
+  render();
+}
+
+function isWorkday(dateStr,dow){
+  const weekend=(dow===0||dow===6);
+  const holiday=HOLIDAY_SET?HOLIDAY_SET.has(dateStr):false;
+  return !weekend && !holiday;
+}
+
+function render(){
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+  const first=new Date(curY,curM,1);
+  const startDow=first.getDay();
+  const daysInMonth=new Date(curY,curM+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const yesterday=new Date(today); yesterday.setDate(yesterday.getDate()-1);
+  const todayStr=fmtYmd(today);
+
+  // 先頭の空白
+  for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cell blank';grid.appendChild(c);}
+
+  let missCount=0, missDaysSelf=0, workdays=0;
+  const rs=roster();
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj=new Date(curY,curM,d);
+    const dateStr=fmtYmd(dateObj);
+    const dow=dateObj.getDay();
+    const cell=document.createElement('div');
+    cell.className='cell';
+    const dnum=document.createElement('div'); dnum.className='dnum'; dnum.textContent=d;
+    if(dow===0)dnum.style.color='#c0392b';
+    if(dow===6)dnum.style.color='#2563eb';
+    cell.appendChild(dnum);
+    if(dateStr===todayStr)cell.classList.add('today-ring');
+
+    const workday=isWorkday(dateStr,dow);
+    const isPast = dateObj<=yesterday;
+
+    if(!workday){
+      cell.classList.add('off');
+    } else if(!isPast){
+      cell.classList.add('future');
+    } else {
+      workdays++;
+      const submitted=SUBMIT_MAP[dateStr]||new Set();
+      if(MODE==='me'){
+        const done = ME && [...submitted].some(n=>norm(n)===norm(ME));
+        if(!ME){
+          cell.classList.add('future');
+        } else if(done){
+          cell.classList.add('ok');
+          const t=document.createElement('div'); t.className='tag tag-ok'; t.textContent='✓ 提出済'; cell.appendChild(t);
+        } else {
+          cell.classList.add('miss','workday'); missDaysSelf++;
+          const t=document.createElement('div'); t.className='tag tag-miss'; t.textContent='未提出'; cell.appendChild(t);
+          cell.onclick=()=>onDateClick(dateStr);
+        }
+      } else { // all
+        const submittedNorm=new Set([...submitted].map(norm));
+        const missing=rs.filter(n=>!submittedNorm.has(norm(n)));
+        if(missing.length===0){
+          cell.classList.add('ok');
+          const t=document.createElement('div'); t.className='tag tag-ok'; t.textContent='全員提出'; cell.appendChild(t);
+        } else {
+          cell.classList.add('miss','workday'); missCount+=missing.length;
+          const t=document.createElement('div'); t.className='tag'; t.innerHTML='<span class="badge-count">未'+missing.length+'</span>'; cell.appendChild(t);
+          const nm=document.createElement('div'); nm.className='names'; nm.textContent=missing.join('・'); cell.appendChild(nm);
+          cell.onclick=()=>onDateClick(dateStr);
+        }
+      }
+    }
+    grid.appendChild(cell);
+  }
+
+  // サマリー
+  const sm=document.getElementById('summary');
+  if(MODE==='me'){
+    if(!ME){ sm.innerHTML='「自分」が未設定です。右上の「自分を設定」から選んでください。'; }
+    else if(missDaysSelf===0){ sm.innerHTML='この月の未提出はありません。お疲れさまでした。'; }
+    else { sm.innerHTML='この月の<b>あなたの未提出：'+missDaysSelf+'日</b>（前日までの営業日 '+workdays+'日中）。赤い日をクリックすると入力できます。'; }
+  } else {
+    if(missCount===0){ sm.innerHTML='この月は全員提出済みです。'; }
+    else { sm.innerHTML='この月の<b>未提出（延べ）：'+missCount+'件</b>（前日までの営業日 '+workdays+'日）。各日の赤マスに未提出者名を表示。'; }
+  }
+  document.getElementById('status').textContent='';
+}
+
+function onDateClick(dateStr){
+  const me=getMe();
+  if(new URLSearchParams(location.search).get('embed')==='1'){
+    window.parent.postMessage({srd:'openEdit',date:dateStr,name:me,isNew:true},'*');
+    return;
+  }
+  const url='SRD日報入力.html?date='+encodeURIComponent(dateStr)+(me?('&name='+encodeURIComponent(me)):'')+'&new=1';
+  window.open(url,'_blank');
+}
+
+function setMode(m){
+  MODE=m;
+  document.getElementById('seg-me').classList.toggle('active',m==='me');
+  document.getElementById('seg-all').classList.toggle('active',m==='all');
+  render();
+}
+function moveMonth(delta){ curM+=delta; if(curM<0){curM=11;curY--;} if(curM>11){curM=0;curY++;} loadMonth(); }
+function goToday(){ const t=new Date(); curY=t.getFullYear(); curM=t.getMonth(); loadMonth(); }
+
+function renderMeBox(){
+  const box=document.getElementById('me-box');
+  const me=getMe();
+  box.innerHTML = me
+    ? '自分：<b>'+me+'</b> <button onclick="setMe()">変更</button>'
+    : '<button onclick="setMe()">自分を設定</button>';
+}
+function setMe(){
+  const cur=getMe();
+  let menu=(cur?('現在の設定：'+cur+'\n変更する場合は番号を選択。このままでよければ空欄でEnter。\n\n'):'自分の名前を選んでください。\n\n');
+  menu+=ATTEND_ROSTER.map((n,i)=>(i+1)+': '+n).join('\n');
+  const input=prompt(menu);
+  if(input===null)return;
+  if(input.trim()===''){ if(!cur)return; render(); return; }
+  const idx=parseInt(input,10);
+  let name='';
+  if(!isNaN(idx)&&idx>=1&&idx<=ATTEND_ROSTER.length){ name=ATTEND_ROSTER[idx-1]; }
+  else { const hit=ATTEND_ROSTER.find(n=>norm(n)===norm(input)); name=hit||input.trim(); }
+  if(!name)return;
+  localStorage.setItem('srd_me_name',name);
+  renderMeBox();
+  render();
+}
+
+function openHelp(){document.getElementById('help-overlay').classList.add('show');document.getElementById('help-panel').classList.add('show');}
+function closeHelp(){document.getElementById('help-overlay').classList.remove('show');document.getElementById('help-panel').classList.remove('show');}
+
+// 初期化
+(function(){
+  const t=new Date(); curY=t.getFullYear(); curM=t.getMonth();
+  loadMonth();
+})();
+
+/* 統合シェル(iframe)への埋め込み対応：?embed=1 でヘッダ非表示＋共通ヘルプ/更新受信 */
+(function(){
+  try{ if(new URLSearchParams(location.search).get('embed')==='1'){ const h=document.querySelector('.header'); if(h)h.style.display='none'; } }catch(e){}
+  window.addEventListener('message',function(e){
+    if(e&&e.data&&e.data.srd==='openHelp'){ openHelp(); }
+    if(e&&e.data&&e.data.srd==='reload'){ loadMonth(); }
+  });
+})();
+</script>
+</body>
+</html>
