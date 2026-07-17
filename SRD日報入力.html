@@ -362,7 +362,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 15:00〜15:10
 17:00〜17:10
 現場などで休憩時間が異なる時は修正して下さい。</span></span></label>
-          <input type="number" id="f-break" value="90" min="0" max="480" step="5" oninput="calcWorkTime()" style="font-family:var(--mono);">
+          <input type="number" id="f-break" value="90" min="0" max="480" step="5" oninput="calcWorkTime(true)" style="font-family:var(--mono);">
         </div>
         <div class="field">
           <label>実働時間</label>
@@ -521,7 +521,7 @@ function confirmClock(){
     const ts=fmt2(ckH)+':'+fmt2(ckM);
     if(ckTarget==='checkin'){document.getElementById('f-checkin').value=ts;document.getElementById('val-checkin').textContent=ts;}
     else{document.getElementById('f-checkout').value=ts;document.getElementById('val-checkout').textContent=ts;}
-    calcWorkTime();
+    calcWorkTime(true);
   }else{
     const tot=ckH*60+ckM;
     const row=document.getElementById('row-'+ckTarget.rowId);
@@ -634,7 +634,6 @@ window.onload=async()=>{
     addRow(); addRow(); addRow();
   }
   drawClock();
-  autofillFirstRowWorktime();
   checkAndShowMissing();
 };
 
@@ -796,7 +795,7 @@ function autofillFirstRowWorktime(){
   calcTotal();
 }
 
-function calcWorkTime(){
+function calcWorkTime(autofill){
   const ci=document.getElementById('f-checkin').value;
   const co=document.getElementById('f-checkout').value;
   const br=parseInt(document.getElementById('f-break').value)||0;
@@ -814,7 +813,7 @@ function calcWorkTime(){
       document.getElementById('total-work').textContent='—';
     }
   }
-  autofillFirstRowWorktime();
+  if(autofill)autofillFirstRowWorktime();
   checkMatch();
 }
 function mToStr(m){return Math.floor(m/60)+'h '+(m%60)+'m';}
