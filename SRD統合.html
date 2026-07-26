@@ -148,7 +148,10 @@ fetch(APPS_JSON_URL+'?t='+Date.now(),{cache:'no-cache'})
 const tlPanel=document.getElementById('tl-panel'),tlOverlay=document.getElementById('tl-overlay'),tlList=document.getElementById('tl-list');
 function renderTools(){
   const cur=body.dataset.view;
-  tlList.innerHTML=tools.map(t=>{const isCur=t.view&&t.view===cur;return '<li><a class="tl-item'+(isCur?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur?'<span class="tl-badge">現在</span>':'')+'</a></li>';}).join('');
+  /* 日報系をランチャー上で1項目に集約すると、現在viewに一致する項目が無いタブが出る。
+     完全一致があればその項目だけ「現在」、無ければ自アプリ項目(view保持)すべてを「現在」にする。 */
+  const hasExact=tools.some(t=>t.view===cur);
+  tlList.innerHTML=tools.map(t=>{const isCur=hasExact?(t.view===cur):!!t.view;return '<li><a class="tl-item'+(isCur?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur?'<span class="tl-badge">現在</span>':'')+'</a></li>';}).join('');
   [...tlList.querySelectorAll('.tl-item')].forEach(a=>{a.addEventListener('click',()=>{const t=tools.find(x=>x.key===a.dataset.key);if(t.view){body.dataset.view=t.view;localStorage.setItem('srd-ws-view',t.view);apply();closeTL();}else if(t.url){window.open(t.url,'_blank','noopener,noreferrer');closeTL();}});});
 }
 function openTL(){renderTools();tlOverlay.classList.add('show');tlPanel.classList.add('show');}
