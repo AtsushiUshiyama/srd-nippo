@@ -523,7 +523,7 @@ function updatePeriodButtonHighlight(){
 // 退職者は除外する
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // 在籍メンバー名簿（日報入力の作業者名と一致させること。退職等で増減したらここを編集）
-const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼'];
+const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ'];
 let HOLIDAY_SET_CACHE=null;
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
@@ -634,7 +634,8 @@ const MF_EMPLOYEES=[
   {no:'018',sei:'増田',mei:'大将'},
   {no:'020',sei:'田里',mei:'絵美'},
   {no:'022',sei:'永井',mei:'遼'},
-  {no:'023',sei:'松下',mei:'歩美'}
+  {no:'023',sei:'松下',mei:'歩美'},
+  {no:'024',sei:'ケイティ',mei:'カイン',dispName:'ケイ'}
 ];
 function findMfEmployee(name){
   if(!name)return null;
