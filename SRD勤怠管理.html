@@ -524,6 +524,29 @@ function updatePeriodButtonHighlight(){
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // 在籍メンバー名簿（日報入力の作業者名と一致させること。退職等で増減したらここを編集）
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ'];
+
+// 在籍期間（未提出判定用）。入社・退社があったらここに追記する
+// from=この日から対象／to=この日まで対象（省略した側は制限なし）
+const ROSTER_TERM={
+  '杉本 裕樹':{to:'2026-07-26'},
+  'ケイ':{from:'2026-08-03'}
+};
+// 指定日にその人が在籍していたか
+function isActiveOn(name,dateStr){
+  const t=ROSTER_TERM[name];
+  if(!t||!dateStr)return true;
+  if(t.from&&dateStr<t.from)return false;
+  if(t.to&&dateStr>t.to)return false;
+  return true;
+}
+// 指定期間にその人の在籍期間が1日でも重なるか
+function isActiveBetween(name,from,to){
+  const t=ROSTER_TERM[name];
+  if(!t)return true;
+  if(t.from&&to&&to<t.from)return false;
+  if(t.to&&from&&from>t.to)return false;
+  return true;
+}
 let HOLIDAY_SET_CACHE=null;
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
@@ -542,7 +565,7 @@ function updateMissingMembers(f){
   const all=ATTEND_ROSTER.slice();
   // 表示中データに含まれる作業者集合
   const present=new Set(f.map(d=>d.name).filter(Boolean));
-  const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex)));
+  const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
   if(!missing.length){el.innerHTML='';return;}
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>'<span class="missing-badge">'+esc(n)+'</span>').join('');
@@ -926,7 +949,7 @@ async function findMissingDates(){
   const cur=new Date(from);
   while(cur<=to){
     const s=_fmtYmd(cur);const dow=cur.getDay();
-    if(dow!==0&&dow!==6&&!holidays.has(s)&&!submitted.has(s))missing.push(s);
+    if(dow!==0&&dow!==6&&!holidays.has(s)&&!submitted.has(s)&&isActiveOn(me,s))missing.push(s);
     cur.setDate(cur.getDate()+1);
   }
   return{me,dates:missing};

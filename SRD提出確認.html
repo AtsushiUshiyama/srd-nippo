@@ -151,6 +151,29 @@ const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environm
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ'];
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 
+// 在籍期間（未提出判定用）。入社・退社があったらここに追記する
+// from=この日から対象／to=この日まで対象（省略した側は制限なし）
+const ROSTER_TERM={
+  '杉本 裕樹':{to:'2026-07-26'},
+  'ケイ':{from:'2026-08-03'}
+};
+// 指定日にその人が在籍していたか
+function isActiveOn(name,dateStr){
+  const t=ROSTER_TERM[name];
+  if(!t||!dateStr)return true;
+  if(t.from&&dateStr<t.from)return false;
+  if(t.to&&dateStr>t.to)return false;
+  return true;
+}
+// 指定期間にその人の在籍期間が1日でも重なるか
+function isActiveBetween(name,from,to){
+  const t=ROSTER_TERM[name];
+  if(!t)return true;
+  if(t.from&&to&&to<t.from)return false;
+  if(t.to&&from&&from>t.to)return false;
+  return true;
+}
+
 const OPERATION_START='2026-05-25'; // 正式運用開始日（これより前は判定しない）
 let MODE='me';           // 'me' | 'all'
 let curY, curM;          // 表示中の年・月(0-11)
@@ -187,7 +210,7 @@ async function fetchMonthSubmissions(fromStr,toStr){
   return map;
 }
 
-function roster(){ return ATTEND_ROSTER.filter(n=>!MISSING_EXCLUDE.some(ex=>n.includes(ex))); }
+function roster(dateStr){ return ATTEND_ROSTER.filter(n=>!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveOn(n,dateStr)); }
 
 async function loadMonth(){
   ME=getMe();
@@ -221,7 +244,6 @@ function render(){
   for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cell blank';grid.appendChild(c);}
 
   let missCount=0, missDaysSelf=0, workdays=0;
-  const rs=roster();
 
   for(let d=1; d<=daysInMonth; d++){
     const dateObj=new Date(curY,curM,d);
@@ -242,6 +264,9 @@ function render(){
       cell.classList.add('off');
     } else if(!isPast){
       cell.classList.add('future');
+    } else if(MODE==='me'&&ME&&!isActiveOn(ME,dateStr)){
+      // 自分の在籍期間外は判定しない
+      cell.classList.add('future');
     } else {
       workdays++;
       const submitted=SUBMIT_MAP[dateStr]||new Set();
@@ -259,7 +284,7 @@ function render(){
         }
       } else { // all
         const submittedNorm=new Set([...submitted].map(norm));
-        const missing=rs.filter(n=>!submittedNorm.has(norm(n)));
+        const missing=roster(dateStr).filter(n=>!submittedNorm.has(norm(n)));
         if(missing.length===0){
           cell.classList.add('ok');
           const t=document.createElement('div'); t.className='tag tag-ok'; t.textContent='全員提出'; cell.appendChild(t);
