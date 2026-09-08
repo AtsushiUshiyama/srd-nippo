@@ -561,7 +561,10 @@ const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // from=この日から対象／to=この日まで対象（省略した側は制限なし）
 const ROSTER_TERM={
   '杉本 裕樹':{to:'2026-07-26'},
-  'ケイ':{from:'2026-08-03'}
+  'ケイ':{from:'2026-08-03'},
+  'ジュンス':{from:'2026-09-08'},
+  '鈴木 雄大':{from:'2026-09-14'},
+  'タイン':{from:'2026-10-01'}
 };
 // 指定日にその人が在籍していたか
 function isActiveOn(name,dateStr){
@@ -972,7 +975,7 @@ function setPeriod(period){
   applyPeriod();
 }
 
-const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ'];
+const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ','ジュンス','鈴木 雄大','タイン'];
 function applyMe(me){
   const sel=document.getElementById('filter-name');
   if(![...sel.options].some(o=>o.value===me)){

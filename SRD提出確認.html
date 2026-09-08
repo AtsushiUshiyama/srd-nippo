@@ -148,14 +148,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 <script>
 const PA_SUMMARY_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8b7174c6210f41a9b50a3e7796579d6e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nCORL5zEr7xEodhJd-_DDo4L4RGBcTnPiOxUpksQ2jo';
 const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/24f1b9ec8d7a49b7852fd30ef4ee2558/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=wB70BWfshlLe34VNQSegUd67387Ts8tFI5rSDpZuSwI';
-const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ'];
+const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ','ジュンス','鈴木 雄大','タイン'];
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 
 // 在籍期間（未提出判定用）。入社・退社があったらここに追記する
 // from=この日から対象／to=この日まで対象（省略した側は制限なし）
 const ROSTER_TERM={
   '杉本 裕樹':{to:'2026-07-26'},
-  'ケイ':{from:'2026-08-03'}
+  'ケイ':{from:'2026-08-03'},
+  'ジュンス':{from:'2026-09-08'},
+  '鈴木 雄大':{from:'2026-09-14'},
+  'タイン':{from:'2026-10-01'}
 };
 // 指定日にその人が在籍していたか
 function isActiveOn(name,dateStr){
