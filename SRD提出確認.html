@@ -39,6 +39,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .lg-miss{background:#fdecea;border:1px solid #e5988f;}
 .lg-ok{background:#eafaf0;border:1px solid #9cd5b3;}
 .lg-off{background:#f0f0f0;border:1px solid #ddd;}
+.lg-hwork{background:#eef4fb;border:1px solid #9bbbe4;}
 
 .cal{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:#f7f4ee;border-bottom:1px solid var(--border);}
@@ -57,17 +58,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .cell.miss{background:#fdecea;cursor:pointer;}
 .cell.miss:hover{background:#fbddd8;}
 .cell.miss .dnum{color:#c0392b;}
+.cell.hwork{background:#eef4fb;}
+.cell.hwork .dnum{color:#1d4ed8;}
 .cell.workday{cursor:pointer;}
 .cell.workday:hover{outline:2px solid #c9c1b3;outline-offset:-2px;}
 .tag{position:absolute;bottom:5px;left:6px;right:6px;font-size:11px;line-height:1.2;}
 .tag-miss{color:#c0392b;font-weight:700;}
 .tag-ok{color:#2f855a;font-weight:600;}
+.tag-hwork{color:#1d4ed8;font-weight:700;}
 .badge-count{display:inline-block;background:#c0392b;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;}
+.names-hwork{color:#1d4ed8;}
 .names{font-size:10px;color:#c0392b;margin-top:2px;word-break:break-all;line-height:1.15;max-height:34px;overflow:hidden;}
 .today-ring{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px;}
 .status{font-size:13px;color:var(--text-muted);margin:8px 2px;}
 .summary{margin-top:14px;font-size:14px;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
 .summary b{color:#c0392b;}
+.summary .hw{color:#1d4ed8;font-weight:700;}
 
 /* ヘルプ */
 .help-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;}
@@ -115,6 +121,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
       <span><i class="lg-miss"></i>未提出</span>
       <span><i class="lg-ok"></i>提出済み</span>
       <span><i class="lg-off"></i>休日（土日・会社休業日）</span>
+      <span><i class="lg-hwork"></i>休日出勤</span>
     </div>
 
     <div class="status" id="status">読み込み中…</div>
@@ -137,7 +144,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
       <h4>自分／全員</h4>
       <p><strong>自分</strong>：自分（「自分」設定の人）の未提出日を赤で表示。<strong>全員</strong>：各日の未提出人数と名前を表示（管理者向け）。</p>
       <h4>色の意味</h4>
-      <p>赤＝未提出／緑＝提出済み／灰＝休日（土日・会社休業日は対象外）。判定は前日までの営業日が対象です。</p>
+      <p>赤＝未提出／緑＝提出済み／灰＝休日（土日・会社休業日は対象外）／青＝休日出勤。判定は前日までの営業日が対象です。</p>
+      <h4>休日出勤</h4>
+      <p>休日に日報が提出されていると、その日は青くなり出勤者名が出ます（欠勤・休暇は除く）。</p>
       <h4>日付クリック</h4>
       <p>赤い日をクリックすると、その日の日報入力が開きます（統合画面では日報入力タブ内で開きます）。</p>
       <h4>「自分」設定</h4>
@@ -155,6 +164,7 @@ const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // from=この日から対象／to=この日まで対象（省略した側は制限なし）
 const ROSTER_TERM={
   '杉本 裕樹':{to:'2026-07-26'},
+  '大野 潤':{to:'2026-09-30'},
   'ケイ':{from:'2026-08-03'},
   'ジュンス':{from:'2026-09-08'},
   '鈴木 雄大':{from:'2026-09-14'},
@@ -182,6 +192,7 @@ let MODE='me';           // 'me' | 'all'
 let curY, curM;          // 表示中の年・月(0-11)
 let HOLIDAY_SET=null;    // Set(YYYY-MM-DD)
 let SUBMIT_MAP={};       // date(YYYY-MM-DD) -> Set(name)
+let HWORK_MAP={};        // date(YYYY-MM-DD) -> Set(name) 休日出勤者（欠勤・休暇は除く）
 let ME='';
 
 function pad2(n){return String(n).padStart(2,'0');}
@@ -204,11 +215,18 @@ async function fetchHolidaySet(){
 
 async function fetchMonthSubmissions(fromStr,toStr){
   const map={};
+  HWORK_MAP={};
   try{
     const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:fromStr,dateTo:toStr})});
     const j=await res.json();
     const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
-    items.forEach(it=>{const d=String(it.date||'').slice(0,10);const nm=String(it.name||'').trim();if(d&&nm){(map[d]=map[d]||new Set()).add(nm);}});
+    items.forEach(it=>{
+      const d=String(it.date||'').slice(0,10);const nm=String(it.name||'').trim();
+      if(!d||!nm)return;
+      (map[d]=map[d]||new Set()).add(nm);
+      const k=String(it.kintai||it['勤務区分']||'').trim();
+      if(k!=='欠勤'&&k!=='休暇'){(HWORK_MAP[d]=HWORK_MAP[d]||new Set()).add(nm);}
+    });
   }catch(e){console.warn('提出データ取得失敗',e);}
   return map;
 }
@@ -246,7 +264,7 @@ function render(){
   // 先頭の空白
   for(let i=0;i<startDow;i++){const c=document.createElement('div');c.className='cell blank';grid.appendChild(c);}
 
-  let missCount=0, missDaysSelf=0, workdays=0;
+  let missCount=0, missDaysSelf=0, workdays=0, hworkCount=0, hworkDaysSelf=0;
 
   for(let d=1; d<=daysInMonth; d++){
     const dateObj=new Date(curY,curM,d);
@@ -265,6 +283,19 @@ function render(){
 
     if(!workday){
       cell.classList.add('off');
+      const workers=[...(HWORK_MAP[dateStr]||[])];
+      if(workers.length){
+        if(MODE==='me'){
+          if(ME&&workers.some(n=>norm(n)===norm(ME))){
+            cell.classList.add('hwork'); hworkDaysSelf++;
+            const t=document.createElement('div'); t.className='tag tag-hwork'; t.textContent='休日出勤'; cell.appendChild(t);
+          }
+        } else {
+          cell.classList.add('hwork'); hworkCount+=workers.length;
+          const t=document.createElement('div'); t.className='tag tag-hwork'; t.textContent='休日出勤 '+workers.length+'名'; cell.appendChild(t);
+          const nm=document.createElement('div'); nm.className='names names-hwork'; nm.textContent=workers.join('・'); cell.appendChild(nm);
+        }
+      }
     } else if(!isPast){
       cell.classList.add('future');
     } else if(MODE==='me'&&ME&&!isActiveOn(ME,dateStr)){
@@ -303,13 +334,16 @@ function render(){
 
   // サマリー
   const sm=document.getElementById('summary');
+  const hwNote = MODE==='me'
+    ? (hworkDaysSelf?' <span class="hw">休日出勤：'+hworkDaysSelf+'日</span>':'')
+    : (hworkCount?' <span class="hw">休日出勤（延べ）：'+hworkCount+'件</span>':'');
   if(MODE==='me'){
     if(!ME){ sm.innerHTML='「自分」が未設定です。右上の「自分を設定」から選んでください。'; }
-    else if(missDaysSelf===0){ sm.innerHTML='この月の未提出はありません。お疲れさまでした。'; }
-    else { sm.innerHTML='この月の<b>あなたの未提出：'+missDaysSelf+'日</b>（前日までの営業日 '+workdays+'日中）。赤い日をクリックすると入力できます。'; }
+    else if(missDaysSelf===0){ sm.innerHTML='この月の未提出はありません。お疲れさまでした。'+hwNote; }
+    else { sm.innerHTML='この月の<b>あなたの未提出：'+missDaysSelf+'日</b>（前日までの営業日 '+workdays+'日中）。赤い日をクリックすると入力できます。'+hwNote; }
   } else {
-    if(missCount===0){ sm.innerHTML='この月は全員提出済みです。'; }
-    else { sm.innerHTML='この月の<b>未提出（延べ）：'+missCount+'件</b>（前日までの営業日 '+workdays+'日）。各日の赤マスに未提出者名を表示。'; }
+    if(missCount===0){ sm.innerHTML='この月は全員提出済みです。'+hwNote; }
+    else { sm.innerHTML='この月の<b>未提出（延べ）：'+missCount+'件</b>（前日までの営業日 '+workdays+'日）。各日の赤マスに未提出者名を表示。'+hwNote; }
   }
   document.getElementById('status').textContent='';
 }
