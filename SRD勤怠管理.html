@@ -380,21 +380,30 @@ async function loadData(){
     LOADING_CHUNKS=chunks.length>1;
     let done=0;
     if(chunks.length>1)showLoading(true,'データを読み込み中... (0/'+chunks.length+')');
+    let firstShown=false;
     await Promise.all(chunks.map(async ([cf,ct])=>{
       const arr=await fetchChunk(cf,ct);
       if(seq!==LOAD_SEQ)return;
       done++;
       if(arr.length){
-        allData=allData.concat(arr.map(mapItem)).sort((a,b)=>b.created.localeCompare(a.created));
-        populateFilters();
-        renderAll();
+        allData=allData.concat(arr.map(mapItem));
+        // 最初の1本だけ早めに描画する。以降は毎回描き直すと件数が増えるほど重くなるので、
+        // 進捗表示だけ更新して全部そろってから1回だけ描画する
+        if(!firstShown){
+          firstShown=true;
+          allData.sort((a,b)=>b.created.localeCompare(a.created));
+          populateFilters();
+          renderAll();
+        }
       }
       if(chunks.length>1)showLoading(true,'データを読み込み中... ('+done+'/'+chunks.length+')');
     }));
     if(seq!==LOAD_SEQ)return;
     LOADING_CHUNKS=false;
+    allData.sort((a,b)=>b.created.localeCompare(a.created));
     lastLoadedFrom=from;
     lastLoadedTo=to;
+    showLoading(true,'表示を作成中...');
     populateFilters();
     renderAll();
   }catch(e){
@@ -686,17 +695,24 @@ function updateMissingMembers(f){
   if(!MEMBER_LOADED)fetchMembers().then(()=>updateMissingMembers(f));
 }
 
+// 画面に一度に並べる行数の上限。これを超える分は描画しない（CSV出力・レポートは全件が対象）
+const MAX_RENDER_ROWS=1500;
+
 function renderKintai(data){
   const tbody=document.getElementById('kintai-tbody');
   if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="empty-cell">データがありません</td></tr>';return;}
-  tbody.innerHTML=data.map(d=>`<tr class="clickable-row" onclick="selectRow(this,'${d.date}','${d.name}')">
+  // 行数が多いとブラウザが固まるため、画面表示だけ先頭 MAX_RENDER_ROWS 行に制限する
+  const over=data.length>MAX_RENDER_ROWS;
+  const shown=over?data.slice(0,MAX_RENDER_ROWS):data;
+  tbody.innerHTML=shown.map(d=>`<tr class="clickable-row" onclick="selectRow(this,'${d.date}','${d.name}')">
     <td>${d.date}</td><td class="col-name" title="${d.name}">${d.name}</td>
     <td>${d.kintai||'通常出勤'}</td><td class="mono">${d.checkin||'—'}</td><td class="mono">${d.checkout||'—'}</td>
     <td>${d.breakMin?d.breakMin+'分':'—'}</td><td class="mono">${d.worktime||'—'}</td>
     <td class="center">${d.commute?'<span class="badge-yes">✓</span>':''}</td>
     <td class="center">${d.lodging?'<span class="badge-yes">✓</span>':''}</td>
     <td>${d.note||''}</td>
-  </tr>`).join('');
+  </tr>`).join('')
+    +(over?`<tr><td colspan="10" class="empty-cell">表示は先頭 ${MAX_RENDER_ROWS.toLocaleString()} 行までです（該当 ${data.length.toLocaleString()} 行）。期間で絞り込むか、CSV出力をご利用ください（CSVは全件が対象です）。</td></tr>`:'');
 }
 
 // 行選択
