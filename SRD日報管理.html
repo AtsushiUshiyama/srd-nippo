@@ -251,8 +251,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <div class="filter-field"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     </div>
     <div class="filter-row filter-row-date">
-    <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="updatePeriodButtonHighlight()"></div>
-    <div class="filter-field" style="width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="updatePeriodButtonHighlight()"></div>
+    <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="onDateInputChange()"></div>
+    <div class="filter-field" style="width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="onDateInputChange()"></div>
     <div class="filter-actions">
       <button class="btn btn-secondary" id="btn-period-all" onclick="setPeriod('all')">全期間</button>
       <button class="btn btn-secondary" id="btn-period-1y" onclick="setPeriod('1y')">直近1年</button>
@@ -1037,6 +1037,22 @@ function reloadData(){
 // 期間設定系ボタンの共通処理
 // filter-from/to/seiban が前回 loadData の取得範囲に収まっていれば renderAll() のみ、
 // はみ出していたら loadData() を実行する
+// 日付欄を手で直した時も絞り込みを反映する
+// 開始と終了を続けて直す操作を1回にまとめるため、少し待ってから実行する
+let _dateApplyTimer=null;
+function onDateInputChange(){
+  updatePeriodButtonHighlight();
+  if(_dateApplyTimer)clearTimeout(_dateApplyTimer);
+  _dateApplyTimer=setTimeout(function(){
+    _dateApplyTimer=null;
+    const f=document.getElementById('filter-from').value;
+    const t=document.getElementById('filter-to').value;
+    if(!f||!t)return;   // 片方が空の間は実行しない
+    if(f>t)return;      // 開始が終了より後の不正な状態では実行しない
+    applyPeriod();
+  },400);
+}
+
 function applyPeriod(){
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
