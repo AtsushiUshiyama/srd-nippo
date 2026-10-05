@@ -143,6 +143,23 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 .missing-banner.show{display:flex;}
 .missing-banner a{color:#c0392b;text-decoration:underline;cursor:pointer;font-weight:700;}
 .missing-banner .mb-close{margin-left:auto;cursor:pointer;border:none;background:transparent;color:#c0392b;font-size:18px;line-height:1;padding:0 4px;}
+/* 1200px未満では枠を無いものとして扱い、フィルターの上部固定を従来どおり効かせる */
+.side-panel{display:contents;}
+/* ── 右サイドパネル版（PC幅のみ）：左=勤怠一覧／右=フィルター ── */
+@media (min-width:1200px){
+  .main{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto auto 1fr;column-gap:16px;padding:0 16px;}
+  #missing-banner{grid-column:1;grid-row:1;}
+  #error-msg{grid-column:1;grid-row:2;}
+  .section.main-list{grid-column:1;grid-row:3;align-self:start;margin-top:12px;margin-bottom:80px;}
+  .side-panel{grid-column:2;grid-row:1 / span 3;align-self:start;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;padding:12px 0;}
+  .side-panel .filter-sticky{position:static;box-shadow:none;padding:0 0 10px;}
+  .side-panel .filter-bar{padding:14px 16px;margin-bottom:8px;}
+  .side-panel .filter-row{gap:8px;}
+  .side-panel .filter-field{width:auto !important;min-width:0 !important;max-width:none !important;flex:1 1 0;}
+  .side-panel .filter-field.ff-btn{flex:0 0 auto;}
+  .side-panel .filter-field.ff-full{flex:1 1 100%;}
+  .side-panel .filter-row-date .filter-actions{flex:1 1 100%;flex-wrap:wrap;margin-left:0;}
+}
 .filter-field input.date-custom{border-color:#d97706;box-shadow:0 0 0 2px rgba(217,119,6,.25);background:#fffbeb;}
 </style>
 </head>
@@ -239,11 +256,13 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 <div class="main">
   <div id="missing-banner" class="missing-banner"></div>
   <div id="error-msg"></div>
+  <!-- PC幅（1200px以上）では右サイドに固定：フィルター -->
+  <aside class="side-panel">
   <div class="filter-sticky">
   <div class="filter-bar">
     <div class="filter-row">
     <div class="filter-field" style="width:120px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
-    <div class="filter-field"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
+    <div class="filter-field ff-btn"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
     </div>
     <div class="filter-row filter-row-date">
     <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="onDateInputChange()"></div>
@@ -267,7 +286,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
   </div>
-  <div class="section">
+  </aside>
+  <div class="section main-list">
     <div class="section-header sticky-head">
       <span class="section-label">勤怠一覧</span>
       <span id="missing-members" style="margin-left:8px;"></span>
@@ -1188,7 +1208,9 @@ function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name'
   const head=document.querySelector('.section-header.sticky-head');
   if(!bar)return;
   const upd=function(){
-    const h1=bar.offsetHeight;
+    // 右サイドパネル版（PC幅）ではフィルターが上に無いので、見出し帯は最上部に固定する
+    const side=window.matchMedia('(min-width:1200px)').matches;
+    const h1=side?0:bar.offsetHeight;
     const h2=head?head.offsetHeight:0;
     const r=document.documentElement.style;
     r.setProperty('--sticky-h',h1+'px');
