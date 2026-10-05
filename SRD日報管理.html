@@ -334,6 +334,7 @@ window.onload=async()=>{
   const todayStr=fmt(today);
   document.getElementById('filter-from').value=todayStr;
   document.getElementById('filter-to').value=todayStr;
+  appliedFrom=todayStr; appliedTo=todayStr;
   if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
   await loadData();
   checkAndShowMissing();
@@ -526,10 +527,10 @@ function getFiltered(){
   const ryakusho=document.getElementById('filter-ryakusho').value;
   const typeFilter=document.getElementById('filter-type').value;
   return allData.filter(d=>{
-    if(name&&d.name!==name)return false;
+    if(name&&_nmKey(d.name)!==_nmKey(name))return false;
     if(from&&d.date<from)return false;
     if(to&&d.date>to)return false;
-    if(seibanCandidates.length&&!d.rows.some(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
+    if(seibanCandidates.length&&!d.rows.some(r=>r.seiban&&seibanCandidates.some(s=>_sbKey(r.seiban)===_sbKey(s))))return false;
     if(ryakusho&&!d.rows.some(r=>r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
     if(typeFilter&&!d.rows.some(r=>r.type&&r.type.trim()===typeFilter))return false;
     return true;
@@ -558,6 +559,13 @@ function sortBy(key){
 }
 
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
+
+// 氏名の照合用：空白（半角・全角）を除いて比較する
+function _nmKey(s){return String(s||'').replace(/[\s　]/g,'');}
+// 製番の照合用：前後の空白を除き、全角数字を半角に揃える
+function _sbKey(s){return String(s||'').trim().replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));}
+// 期間ボタンでキャンセルされた時に日付欄を戻すための、現在適用中の期間
+let appliedFrom='', appliedTo='';
 
 // ── メンバーマスタ（SharePoint「Members」）：バッジのラベルと色 ──
 const PA_MEMBERS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/ad689300d67541bd96fb27c5efd38d65/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Fc5_32T5BerThELGj2I1N14A_zufBfbFrCMVk8T9YBA';
@@ -632,8 +640,8 @@ function updateMissingMembers(f){
   // 固定の在籍名簿から判定（読み込んだデータに依存しない）
   const all=ATTEND_ROSTER.slice();
   // 表示中データに含まれる作業者集合
-  const present=new Set(f.map(d=>d.name).filter(Boolean));
-  const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
+  const present=new Set(f.map(d=>_nmKey(d.name)).filter(Boolean));
+  const missing=all.filter(n=>!present.has(_nmKey(n))&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
   if(!missing.length){el.innerHTML='';return;}
   el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>memberBadge(n,'missing-badge')).join('');
   if(!MEMBER_LOADED)fetchMembers().then(()=>updateMissingMembers(f));
@@ -712,7 +720,7 @@ function updateReportButton(f){
   const seibanPadded=seibanRaw.padStart(4,'0');
   const seibanStripped=seibanRaw.replace(/^0+/,'')||'0';
   const seibanCandidates=Array.from(new Set([seibanRaw,seibanPadded,seibanStripped].filter(v=>v)));
-  const matchingRows=f.flatMap(d=>d.rows.filter(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))));
+  const matchingRows=f.flatMap(d=>d.rows.filter(r=>r.seiban&&seibanCandidates.some(s=>_sbKey(r.seiban)===_sbKey(s))));
   if(matchingRows.length===0){btn.disabled=true;if(summary)summary.style.display='none';return;}
   const seibanSet=new Set(matchingRows.map(r=>r.seiban));
   const enabled=seibanSet.size===1;
@@ -789,7 +797,7 @@ function renderSagyou(data){
   const typeFilter=document.getElementById('filter-type').value;
   const rows=data.flatMap(d=>d.rows
     .filter(r=>{
-      if(seibanCandidates.length&&!(r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s))))return false;
+      if(seibanCandidates.length&&!(r.seiban&&seibanCandidates.some(s=>_sbKey(r.seiban)===_sbKey(s))))return false;
       if(ryakusho&&!(r.kojimei&&r.kojimei.length>=8&&r.kojimei.substring(5,8)===ryakusho))return false;
       if(typeFilter&&!(r.type&&r.type.trim()===typeFilter))return false;
       return true;
@@ -872,7 +880,7 @@ function exportReportCsv(){
   const f=getFiltered();
   // 製番にマッチする行だけ抽出
   const matchingRows=f.flatMap(d=>d.rows
-    .filter(r=>r.seiban&&seibanCandidates.some(s=>r.seiban.includes(s)))
+    .filter(r=>r.seiban&&seibanCandidates.some(s=>_sbKey(r.seiban)===_sbKey(s)))
     .map(r=>({date:d.date,name:d.name,...r})));
 
   // 作業種別ごとに作業時間を集計
@@ -946,10 +954,18 @@ function applyPeriod(){
   // 製番が前回取得時と違う or 期間が前回取得範囲をはみ出す → 再取得
   const needReload=(seiban!==lastLoadedSeiban)||(!lastLoadedFrom||!lastLoadedTo||from<lastLoadedFrom||to>lastLoadedTo);
   if(needReload){
-    if(!confirmLongRangeIfNeeded())return;
+    if(!confirmLongRangeIfNeeded()){
+      // キャンセル：日付欄だけ新しい期間のまま残ると一覧と食い違うので元に戻す
+      document.getElementById('filter-from').value=appliedFrom;
+      document.getElementById('filter-to').value=appliedTo;
+      if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
+      return;
+    }
+    appliedFrom=from; appliedTo=to;
     loadData();
     return;
   }
+  appliedFrom=from; appliedTo=to;
   // 範囲内 → 手元の allData を絞り込み表示するだけ（件数が多い時はオーバーレイ）
   renderAllSafe();
 }

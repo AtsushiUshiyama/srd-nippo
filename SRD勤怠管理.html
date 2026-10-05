@@ -311,6 +311,7 @@ window.onload=async()=>{
   const todayStr=fmt(today);
   document.getElementById('filter-from').value=todayStr;
   document.getElementById('filter-to').value=todayStr;
+  appliedFrom=todayStr; appliedTo=todayStr;
   if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
   await loadData();
   checkAndShowMissing();
@@ -431,7 +432,7 @@ function getFiltered(){
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
   return allData.filter(d=>{
-    if(name&&d.name!==name)return false;
+    if(name&&_nmKey(d.name)!==_nmKey(name))return false;
     if(from&&d.date<from)return false;
     if(to&&d.date>to)return false;
     return true;
@@ -527,6 +528,13 @@ const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // 在籍メンバー名簿（日報入力の作業者名と一致させること。退職等で増減したらここを編集）
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ','ジュンス','鈴木 雄大','タイン'];
 
+// 氏名の照合用：空白（半角・全角）を除いて比較する
+function _nmKey(s){return String(s||'').replace(/[\s　]/g,'');}
+// 製番の照合用：前後の空白を除き、全角数字を半角に揃える
+function _sbKey(s){return String(s||'').trim().replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));}
+// 期間ボタンでキャンセルされた時に日付欄を戻すための、現在適用中の期間
+let appliedFrom='', appliedTo='';
+
 // ── メンバーマスタ（SharePoint「Members」）：バッジのラベルと色 ──
 const PA_MEMBERS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/ad689300d67541bd96fb27c5efd38d65/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Fc5_32T5BerThELGj2I1N14A_zufBfbFrCMVk8T9YBA';
 let MEMBER_MAP={};       // 空白を除いた氏名 -> {label,initial,bg,fg}
@@ -600,8 +608,8 @@ function updateMissingMembers(f){
   // 固定の在籍名簿から判定（読み込んだデータに依存しない）
   const all=ATTEND_ROSTER.slice();
   // 表示中データに含まれる作業者集合
-  const present=new Set(f.map(d=>d.name).filter(Boolean));
-  const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
+  const present=new Set(f.map(d=>_nmKey(d.name)).filter(Boolean));
+  const missing=all.filter(n=>!present.has(_nmKey(n))&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
   if(!missing.length){el.innerHTML='';return;}
   el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>memberBadge(n,'missing-badge')).join('');
   if(!MEMBER_LOADED)fetchMembers().then(()=>updateMissingMembers(f));
@@ -909,10 +917,18 @@ function applyPeriod(){
   const to=document.getElementById('filter-to').value;
   // 初回未取得 or 期間が前回取得範囲をはみ出す → 再取得
   if(!lastLoadedFrom||!lastLoadedTo||from<lastLoadedFrom||to>lastLoadedTo){
-    if(!confirmLongRangeIfNeeded())return;
+    if(!confirmLongRangeIfNeeded()){
+      // キャンセル：日付欄だけ新しい期間のまま残ると一覧と食い違うので元に戻す
+      document.getElementById('filter-from').value=appliedFrom;
+      document.getElementById('filter-to').value=appliedTo;
+      if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
+      return;
+    }
+    appliedFrom=from; appliedTo=to;
     loadData();
     return;
   }
+  appliedFrom=from; appliedTo=to;
   // 範囲内 → 手元の allData を絞り込み表示するだけ
   renderAllSafe();
 }
