@@ -47,7 +47,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .cal-head div.sun{color:#c0392b;}
 .cal-head div.sat{color:#2563eb;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-.cell{min-height:78px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 6px 4px;position:relative;font-size:13px;display:flex;flex-direction:column;}
+.cell{min-height:78px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 6px 4px;position:relative;font-size:13px;}
 .cell:nth-child(7n){border-right:none;}
 .cell .dnum{font-weight:600;color:var(--text);font-size:13px;}
 .cell.blank{background:#fafafa;}
@@ -62,7 +62,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .cell.hwork .dnum{color:#1d4ed8;}
 .cell.workday{cursor:pointer;}
 .cell.workday:hover{outline:2px solid #c9c1b3;outline-offset:-2px;}
-.tag{margin-top:auto;font-size:11px;line-height:1.2;}
+.tag{position:absolute;top:6px;left:26px;right:6px;text-align:right;font-size:11px;line-height:1.2;}
 .tag-miss{color:#c0392b;font-weight:700;}
 .tag-ok{color:#2f855a;font-weight:600;}
 .tag-hwork{color:#1d4ed8;font-weight:700;}
