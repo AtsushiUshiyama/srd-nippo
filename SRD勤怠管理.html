@@ -34,7 +34,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-green{background:var(--green);color:#fff;}
 .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:clip;}
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
-.section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
+.section-label{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--text);text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
 .section-actions{margin-left:auto;}
 .missing-badge{display:inline-block;background:#fdecea;color:#c0392b;border:1px solid #f5c6c1;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;margin-right:4px;white-space:nowrap;}
 .missing-label{color:var(--text-muted);font-size:11px;font-weight:600;margin-right:4px;}
@@ -47,7 +47,7 @@ td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-
 /* 作業詳細・進捗は折り返し表示 */
 #sagyou-tbody td:nth-child(7),
 #sagyou-tbody td:nth-child(7),#sagyou-tbody td:nth-child(8){white-space:pre-wrap;word-break:break-all;overflow:visible;text-overflow:clip;vertical-align:top;line-height:1.5;}
-thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
+thead th{font-size:12px;font-weight:700;letter-spacing:.04em;color:#5c5548;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
 /* 一覧の見出し帯もフィルターバーの直下に固定する */
 .section-header.sticky-head{position:sticky;top:var(--sticky-h,0px);z-index:60;}
 thead th{position:sticky;top:var(--sticky-h2,0px);z-index:50;}
@@ -159,7 +159,17 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   .side-panel .filter-field.ff-btn{flex:0 0 auto;}
   .side-panel .filter-field.ff-full{flex:1 1 100%;}
   .side-panel .filter-row-date .filter-actions{flex:1 1 100%;flex-wrap:wrap;margin-left:0;}
+  html{scrollbar-gutter:stable;}
+  .side-panel .filter-bar.grouped{flex-direction:column;flex-wrap:nowrap;align-items:stretch;row-gap:12px;}
+  .side-panel .filter-group+.filter-group{border-top:1px solid var(--border);padding-top:12px;}
+  .side-panel .fg-member{padding-bottom:8px;}
 }
+/* フィルターの区画（メンバー／日付／顧客名／作業種別・製番）*/
+/* 改行用の空要素が1行分の隙間を作らないよう、行間はボタンの下余白で取る */
+.filter-row-date .filter-actions{flex-wrap:wrap;row-gap:0;}
+.filter-row-date .filter-actions .btn{margin-bottom:6px;}
+.fa-break{flex-basis:100%;height:0;}
+.filter-bar.grouped{flex-direction:row;flex-wrap:wrap;align-items:flex-end;column-gap:24px;row-gap:12px;}
 .filter-field input.date-custom{border-color:#d97706;box-shadow:0 0 0 2px rgba(217,119,6,.25);background:#fffbeb;}
 </style>
 </head>
@@ -202,7 +212,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <p>共通ヘッダのタブ（日報入力／日報管理／勤怠管理）で画面を切替。会社ロゴのクリックで社内ツール一覧（工程・カレンダー・製番マスタ等）が開きます。右上の<strong>更新</strong>は表示中画面を今の条件のまま最新化、<strong>？</strong>は表示中画面のヘルプです。</p>
 
     <h4>期間フィルタ</h4>
-    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>上段＝作業者・略称など／下段＝日付・期間ボタン</strong>の2段構成（スクロールしても固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
+    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>メンバー → 日付 → 顧客名 → 作業種別・製番</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
       <li><strong>直近1年</strong>／<strong>直近2か月</strong>／<strong>直近1か月</strong></li>
@@ -212,9 +222,9 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <li><strong>本日／昨日／2〜5日前</strong>：1日単位での絞り込み</li>
     </ul>
 
-    <h4>作業者フィルタ</h4>
+    <h4>メンバーフィルタ</h4>
     <ul>
-      <li><strong>作業者プルダウン</strong>：全員／個別作業者を選択</li>
+      <li><strong>メンバー</strong>プルダウン：全員／個別メンバーを選択</li>
       <li><strong>自分</strong>ボタン：1回押すと自分の勤怠だけ表示（次回以降も記憶）。<strong>長押し</strong>で名前の設定・変更・修正ができる（在籍者一覧から選択）。</li>
     </ul>
 
@@ -259,12 +269,12 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <!-- PC幅（1200px以上）では右サイドに固定：フィルター -->
   <aside class="side-panel">
   <div class="filter-sticky">
-  <div class="filter-bar">
-    <div class="filter-row">
-    <div class="filter-field" style="width:120px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
+  <div class="filter-bar grouped">
+    <div class="filter-row filter-group fg-member">
+    <div class="filter-field" style="width:120px"><label>メンバー</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
     <div class="filter-field ff-btn"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
     </div>
-    <div class="filter-row filter-row-date">
+    <div class="filter-row filter-row-date filter-group fg-date">
     <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="onDateInputChange()"></div>
     <div class="filter-field" style="width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="onDateInputChange()"></div>
     <div class="filter-actions">
@@ -275,6 +285,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-period-shimeM" onclick="setPeriod('shimeM')">末締め</button>
       <button class="btn btn-secondary" id="btn-period-shime15" onclick="setPeriod('shime15')">15日締め</button>
       <button class="btn btn-secondary" id="btn-period-shime20" onclick="setPeriod('shime20')">20日締め</button>
+      <span class="fa-break"></span>
       <button class="btn btn-secondary" id="btn-day-0" onclick="filterDay(0)">本日</button>
       <button class="btn btn-secondary" id="btn-day-1" onclick="filterDay(1)">昨日</button>
       <button class="btn btn-secondary" id="btn-day-2" onclick="filterDay(2)">2日前</button>

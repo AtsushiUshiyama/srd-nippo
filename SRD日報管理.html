@@ -35,7 +35,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-green:disabled{opacity:.35;cursor:not-allowed;}
 .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:clip;}
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
-.section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
+.section-label{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--text);text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
 .section-actions{margin-left:auto;}
 /* PCでは横スクロール不要（table-layout:fixed）。overflow を外すと見出しの固定が効く */
 .table-wrap{overflow-x:visible;}
@@ -44,7 +44,7 @@ td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-
 /* 作業詳細・進捗は折り返し表示 */
 #sagyou-tbody td:nth-child(7),
 #sagyou-tbody td:nth-child(7),#sagyou-tbody td:nth-child(8){white-space:pre-wrap;word-break:break-all;overflow:visible;text-overflow:clip;vertical-align:top;line-height:1.5;}
-thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
+thead th{font-size:12px;font-weight:700;letter-spacing:.04em;color:#5c5548;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
 /* 一覧の見出し帯もフィルターバーの直下に固定する */
 .section-header.sticky-head{position:sticky;top:var(--sticky-h,0px);z-index:60;}
 thead th{position:sticky;top:var(--sticky-h2,0px);z-index:50;}
@@ -165,10 +165,20 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   .side-panel .filter-field.ff-btn{flex:0 0 auto;}
   .side-panel .filter-field.ff-full{flex:1 1 100%;}
   .side-panel .filter-row-date .filter-actions{flex:1 1 100%;flex-wrap:wrap;margin-left:0;}
+  html{scrollbar-gutter:stable;}
+  .side-panel .filter-bar.grouped{flex-direction:column;flex-wrap:nowrap;align-items:stretch;row-gap:12px;}
+  .side-panel .filter-group+.filter-group{border-top:1px solid var(--border);padding-top:12px;}
+  .side-panel .fg-member{padding-bottom:8px;}
   .side-panel #report-summary{margin-top:auto;margin-bottom:0;}
   .side-panel #report-summary > div:last-child{padding:12px 14px !important;gap:12px !important;}
   .side-panel #report-info,.side-panel #report-types{min-width:0 !important;flex:1 1 100% !important;}
 }
+/* フィルターの区画（メンバー／日付／顧客名／作業種別・製番）*/
+/* 改行用の空要素が1行分の隙間を作らないよう、行間はボタンの下余白で取る */
+.filter-row-date .filter-actions{flex-wrap:wrap;row-gap:0;}
+.filter-row-date .filter-actions .btn{margin-bottom:6px;}
+.fa-break{flex-basis:100%;height:0;}
+.filter-bar.grouped{flex-direction:row;flex-wrap:wrap;align-items:flex-end;column-gap:24px;row-gap:12px;}
 .filter-field input.date-custom{border-color:#d97706;box-shadow:0 0 0 2px rgba(217,119,6,.25);background:#fffbeb;}
 </style>
 </head>
@@ -215,7 +225,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <p>「自分」を設定していると、過去30日にあなた自身の未提出日があるとき上部へ赤い帯で表示されます。日付をクリックすると、その日の日報を新規入力する画面が別タブで開きます（土日・休日は対象外）。</p>
 
     <h4>期間フィルタ</h4>
-    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>上段＝作業者・略称など／下段＝日付・期間ボタン</strong>の2段構成（スクロールしても固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
+    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>メンバー → 日付 → 顧客名 → 作業種別・製番</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
       <li><strong>直近1年</strong>／<strong>直近2か月</strong>／<strong>直近1か月</strong></li>
@@ -225,16 +235,16 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <li><strong>本日／昨日／2〜5日前</strong>：1日単位での絞り込み</li>
     </ul>
 
-    <h4>作業者・略称・作業種別・製番フィルタ</h4>
+    <h4>メンバー・顧客名・作業種別・製番フィルタ</h4>
     <ul>
-      <li><strong>作業者</strong>：プルダウンで全員／個別作業者を選択。<strong>自分</strong>ボタンは1回押すと自分だけ表示（記憶）、<strong>長押し</strong>で名前の設定・変更ができる。</li>
-      <li><strong>略称</strong>：顧客略称（<code>[A-Z]{3}</code>）で絞り込み。プルダウンには<strong>略号＋正式社名</strong>（例：AVR 株式会社エビア）を表示。</li>
+      <li><strong>メンバー</strong>：プルダウンで全員／個別メンバーを選択。<strong>自分</strong>ボタンは1回押すと自分だけ表示（記憶）、<strong>長押し</strong>で名前の設定・変更ができる。</li>
+      <li><strong>顧客名</strong>：顧客略称（<code>[A-Z]{3}</code>）で絞り込み。プルダウンには<strong>略号＋正式社名</strong>（例：AVR 株式会社エビア）を表示。</li>
       <li><strong>作業種別</strong>：作業種別で絞り込み</li>
       <li><strong>製番</strong>：4桁の数字で絞り込み（部分一致）</li>
     </ul>
 
     <h4>リセット</h4>
-    <p>作業者・略称・作業種別・製番のフィルタを一括クリア。期間はそのまま。</p>
+    <p>メンバー・顧客名・作業種別・製番のフィルタを一括クリア。期間はそのまま。</p>
 
     <h4>作業明細一覧の見方</h4>
     <ul>
@@ -275,16 +285,12 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <!-- PC幅（1200px以上）では右サイドに固定：上=フィルター／下=製番レポート -->
   <aside class="side-panel">
   <div class="filter-sticky">
-  <div class="filter-bar">
-    <div class="filter-row">
-    <div class="filter-field" style="width:120px"><label>作業者</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
+  <div class="filter-bar grouped">
+    <div class="filter-row filter-group fg-member">
+    <div class="filter-field" style="width:120px"><label>メンバー</label><select id="filter-name" onchange="renderAllSafe()"><option value="">全員</option></select></div>
     <div class="filter-field ff-btn"><label>&nbsp;</label><div style="position:relative;display:inline-block;"><button class="btn btn-secondary" id="btn-me" style="height:34px">自分</button><span style="position:absolute;top:100%;left:0;right:0;margin-top:2px;text-align:center;font-size:9px;color:var(--text-hint);line-height:1.1;white-space:nowrap;">長押しで変更</span></div></div>
-    <div class="filter-field ff-full" style="width:260px"><label>略称</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全略称</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
-    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
-    <div class="filter-field ff-btn"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     </div>
-    <div class="filter-row filter-row-date">
+    <div class="filter-row filter-row-date filter-group fg-date">
     <div class="filter-field" style="width:150px"><label>日付（開始）</label><input type="date" id="filter-from" onchange="onDateInputChange()"></div>
     <div class="filter-field" style="width:150px"><label>日付（終了）</label><input type="date" id="filter-to" onchange="onDateInputChange()"></div>
     <div class="filter-actions">
@@ -295,6 +301,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-period-shimeM" onclick="setPeriod('shimeM')">末締め</button>
       <button class="btn btn-secondary" id="btn-period-shime15" onclick="setPeriod('shime15')">15日締め</button>
       <button class="btn btn-secondary" id="btn-period-shime20" onclick="setPeriod('shime20')">20日締め</button>
+      <span class="fa-break"></span>
       <button class="btn btn-secondary" id="btn-day-0" onclick="filterDay(0)">本日</button>
       <button class="btn btn-secondary" id="btn-day-1" onclick="filterDay(1)">昨日</button>
       <button class="btn btn-secondary" id="btn-day-2" onclick="filterDay(2)">2日前</button>
@@ -302,6 +309,14 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
       <button class="btn btn-secondary" id="btn-day-4" onclick="filterDay(4)">4日前</button>
       <button class="btn btn-secondary" id="btn-day-5" onclick="filterDay(5)">5日前</button>
     </div>
+    </div>
+    <div class="filter-row filter-group fg-customer">
+    <div class="filter-field ff-full" style="width:260px"><label>顧客名</label><select id="filter-ryakusho" onchange="renderAllSafe()"><option value="">全顧客</option></select></div>
+    </div>
+    <div class="filter-row filter-group fg-type">
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>作業種別</label><select id="filter-type" onchange="renderAllSafe()"><option value="">全種別</option></select></div>
+    <div class="filter-field" style="min-width:100px;max-width:130px"><label>製番</label><input type="text" id="filter-seiban" maxlength="4" placeholder="例: 0651" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter'){event.preventDefault();renderAllSafe();}" onchange="renderAllSafe()" style="font-family:var(--mono);width:100%;ime-mode:disabled"></div>
+    <div class="filter-field ff-btn"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()" style="height:34px">リセット</button></div>
     </div>
   </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
@@ -623,7 +638,7 @@ function populateFilters(){
   }));
   const rs=document.getElementById('filter-ryakusho');
   const curRy=rs.value;
-  rs.innerHTML='<option value="">全略称</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}${CUSTOMER_MAP[v]?(' '+CUSTOMER_MAP[v]):''}</option>`).join('');
+  rs.innerHTML='<option value="">全顧客</option>'+[...ryakushoSet].sort().map(v=>`<option value="${v}">${v}${CUSTOMER_MAP[v]?(' '+CUSTOMER_MAP[v]):''}</option>`).join('');
   rs.value=curRy;
   // 作業種別を抽出
   const typeSet=new Set();
@@ -910,7 +925,7 @@ function renderReportSummary(matchingRows){
     <div><span style="color:var(--text-muted);font-size:11px">製番</span> <strong style="font-family:var(--mono);font-size:16px">${seibanPadded}</strong></div>
     <div><span style="color:var(--text-muted);font-size:11px">案件名</span> ${sampleKojimei||'—'}</div>
     <div><span style="color:var(--text-muted);font-size:11px">期間</span> ${from} 〜 ${to}</div>
-    <div><span style="color:var(--text-muted);font-size:11px">作業者</span> ${name} ／ <span style="color:var(--text-muted);font-size:11px">略称</span> ${ryakusho} ／ <span style="color:var(--text-muted);font-size:11px">作業種別フィルタ</span> ${typeFilter}</div>
+    <div><span style="color:var(--text-muted);font-size:11px">メンバー</span> ${name} ／ <span style="color:var(--text-muted);font-size:11px">顧客名</span> ${ryakusho==='全略称'?'全顧客':ryakusho} ／ <span style="color:var(--text-muted);font-size:11px">作業種別フィルタ</span> ${typeFilter}</div>
     <div><span style="color:var(--text-muted);font-size:11px">データ件数</span> <strong>${matchingRows.length}件</strong></div>
   `;
 
