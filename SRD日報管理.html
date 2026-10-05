@@ -225,7 +225,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <p>「自分」を設定していると、過去30日にあなた自身の未提出日があるとき上部へ赤い帯で表示されます。日付をクリックすると、その日の日報を新規入力する画面が別タブで開きます（土日・休日は対象外）。</p>
 
     <h4>期間フィルタ</h4>
-    <p>開いた直後は<strong>本日のみ</strong>を表示。フィルターは<strong>メンバー → 日付 → 顧客名 → 作業種別・製番</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
+    <p>開いた直後は<strong>直近2か月</strong>を表示（統合画面で開いた時。単独で開いた時は<strong>本日のみ</strong>）。フィルターは<strong>メンバー → 日付 → 顧客名 → 作業種別・製番</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
       <li><strong>直近1年</strong>／<strong>直近2か月</strong>／<strong>直近1か月</strong></li>
@@ -378,13 +378,16 @@ let lastLoadedFrom='', lastLoadedTo='', lastLoadedSeiban='';
 
 window.onload=async()=>{
   fetchMembers();
-  // デフォルト：本日のみ
+  // デフォルト：統合ワークスペース内では直近2か月（ポータルから開いた時点で裏で読み込んでおく）、単独で開いた時は本日のみ
   const today=new Date();
   const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const todayStr=fmt(today);
-  document.getElementById('filter-from').value=todayStr;
+  const embed=new URLSearchParams(location.search).get('embed')==='1';
+  // 「直近2か月」ボタン（setPeriod('2m')）と同じ計算にして、ボタンのハイライトも合わせる
+  const fromStr=embed?fmt(new Date(today.getFullYear(),today.getMonth()-2,today.getDate())):todayStr;
+  document.getElementById('filter-from').value=fromStr;
   document.getElementById('filter-to').value=todayStr;
-  appliedFrom=todayStr; appliedTo=todayStr;
+  appliedFrom=fromStr; appliedTo=todayStr;
   if(typeof updatePeriodButtonHighlight==='function')updatePeriodButtonHighlight();
   await loadData();
   checkAndShowMissing();
