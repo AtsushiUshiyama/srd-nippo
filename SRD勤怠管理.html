@@ -38,6 +38,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .missing-badge{display:inline-block;background:#fdecea;color:#c0392b;border:1px solid #f5c6c1;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;margin-right:4px;white-space:nowrap;}
 .missing-label{color:var(--text-muted);font-size:11px;font-weight:600;margin-right:4px;}
 .mbadge{display:inline-block;background:#eee;color:#333;border:1px solid transparent;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;margin-right:4px;white-space:nowrap;}
+.mbadge-num{margin-left:4px;opacity:.75;font-weight:600;}
 /* PCでは横スクロール不要（table-layout:fixed）。overflow を外すと見出しの固定が効く */
 .table-wrap{overflow-x:visible;}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
@@ -46,11 +47,14 @@ td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-
 #sagyou-tbody td:nth-child(7),
 #sagyou-tbody td:nth-child(7),#sagyou-tbody td:nth-child(8){white-space:pre-wrap;word-break:break-all;overflow:visible;text-overflow:clip;vertical-align:top;line-height:1.5;}
 thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
-thead th{position:sticky;top:var(--sticky-h,0px);z-index:50;}
+/* 一覧の見出し帯もフィルターバーの直下に固定する */
+.section-header.sticky-head{position:sticky;top:var(--sticky-h,0px);z-index:60;}
+thead th{position:sticky;top:var(--sticky-h2,0px);z-index:50;}
 /* 横スクロールする幅では見出し固定が効かないため解除する */
 @media (max-width:600px){
   .table-wrap{overflow-x:auto;}
   thead th{position:static;}
+  .section-header.sticky-head{position:static;}
 }
 thead th.sortable{cursor:pointer;user-select:none;}
 thead th.sortable:hover{color:var(--accent);background:var(--accent-soft);}
@@ -260,10 +264,10 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     </div>
     </div>
   </div>
-  </div>
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
+  </div>
   <div class="section">
-    <div class="section-header">
+    <div class="section-header sticky-head">
       <span class="section-label">勤怠一覧</span>
       <span id="missing-members" style="margin-left:8px;"></span>
       <div class="section-actions">
@@ -642,12 +646,13 @@ async function fetchMembers(){
   return MEMBER_MAP;
 }
 // 氏名 → バッジHTML。マスタに無ければ灰色で氏名をそのまま出す
-function memberBadge(name,cls){
+function memberBadge(name,cls,suffix){
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const m=MEMBER_MAP[_mkey(name)];
   const text=(m&&m.label)?m.label:name;
   const style=(m&&m.bg)?('background:'+m.bg+';color:'+(m.fg||'#333')+';border-color:'+m.bg+';'):'';
-  return '<span class="'+(cls||'mbadge')+'" style="'+style+'" title="'+esc(name)+'">'+esc(text)+'</span>';
+  const tail=suffix?('<span class="mbadge-num">'+esc(suffix)+'</span>'):'';
+  return '<span class="'+(cls||'mbadge')+'" style="'+style+'" title="'+esc(name)+'">'+esc(text)+tail+'</span>';
 }
 
 // 在籍期間（未提出判定用）。入社・退社があったらここに追記する
@@ -677,6 +682,8 @@ function isActiveBetween(name,from,to){
   return true;
 }
 let HOLIDAY_SET_CACHE=null;
+// 運用開始日。これより前の日付は未提出の判定をしない（提出確認と同じ基準）
+const OPERATION_START='2026-05-25';
 function updateMissingMembers(f){
   const el=document.getElementById('missing-members');
   if(!el)return;
@@ -684,21 +691,41 @@ function updateMissingMembers(f){
   if(LOADING_CHUNKS){el.innerHTML='';return;}
   const nameFilter=document.getElementById('filter-name').value;
   if(nameFilter){el.innerHTML='';return;}
+  // 休日一覧が未取得のうちは祝日を誤判定するので出さない（取得後に再描画される）
+  if(!HOLIDAY_SET_CACHE){el.innerHTML='';return;}
   const from=document.getElementById('filter-from').value;
   const to=document.getElementById('filter-to').value;
-  // 表示範囲が1日だけ、かつその日が休日（土日 or Holidaysリスト）なら未提出は出さない
-  if(from && from===to){
-    const _d=new Date(from+'T00:00:00');const _dow=_d.getDay();
-    const _hol=(_dow===0||_dow===6)||(HOLIDAY_SET_CACHE?HOLIDAY_SET_CACHE.has(from):false);
-    if(_hol){el.innerHTML='';return;}
+  if(!from||!to){el.innerHTML='';return;}
+  // 表示中データを「日付 → 提出した人」に整理する
+  const sub={};
+  f.forEach(d=>{
+    const k=String(d.date||'').slice(0,10); if(!k)return;
+    (sub[k]=sub[k]||new Set()).add(_nmKey(d.name));
+  });
+  // 判定する範囲：運用開始日以降、かつ前日まで（当日は催促しない）
+  const today=new Date(); today.setHours(0,0,0,0);
+  const yst=new Date(today); yst.setDate(yst.getDate()-1);
+  let cur=new Date((from<OPERATION_START?OPERATION_START:from)+'T00:00:00');
+  const endD=new Date(to+'T00:00:00');
+  const last=endD>yst?yst:endD;
+  const roster=ATTEND_ROSTER.filter(n=>!MISSING_EXCLUDE.some(ex=>n.includes(ex)));
+  // 営業日ごとに、その日に出していない在籍者を集める（1日でも欠けていれば未提出）
+  const missCount={};
+  while(cur<=last){
+    const s=_fmtD(cur); const dow=cur.getDay();
+    if(dow!==0&&dow!==6&&!HOLIDAY_SET_CACHE.has(s)){
+      const done=sub[s]||new Set();
+      for(const n of roster){
+        if(!isActiveOn(n,s))continue;
+        if(!done.has(_nmKey(n)))missCount[n]=(missCount[n]||0)+1;
+      }
+    }
+    cur.setDate(cur.getDate()+1);
   }
-  // 固定の在籍名簿から判定（読み込んだデータに依存しない）
-  const all=ATTEND_ROSTER.slice();
-  // 表示中データに含まれる作業者集合
-  const present=new Set(f.map(d=>_nmKey(d.name)).filter(Boolean));
-  const missing=all.filter(n=>!present.has(_nmKey(n))&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
+  // 欠けている日数が多い人から並べる
+  const missing=roster.filter(n=>missCount[n]).sort((a,b)=>missCount[b]-missCount[a]);
   if(!missing.length){el.innerHTML='';return;}
-  el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>memberBadge(n,'missing-badge')).join('');
+  el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>memberBadge(n,'missing-badge',missCount[n]+'日')).join('');
   if(!MEMBER_LOADED)fetchMembers().then(()=>updateMissingMembers(f));
 }
 
@@ -1154,13 +1181,20 @@ function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name'
   btn.addEventListener('click',function(e){if(longFired){longFired=false;e.preventDefault();e.stopImmediatePropagation();return;}if(typeof filterMe==='function')filterMe();});
 })();
 
-/* フィルターバーの高さをCSS変数に入れ、テーブル見出しをその直下に固定する */
+/* 固定する各段の高さをCSS変数に入れる（フィルターバー → 一覧の見出し帯 → テーブル見出し）*/
 (function(){
   const bar=document.querySelector('.filter-sticky');
+  const head=document.querySelector('.section-header.sticky-head');
   if(!bar)return;
-  const upd=()=>document.documentElement.style.setProperty('--sticky-h',bar.offsetHeight+'px');
+  const upd=function(){
+    const h1=bar.offsetHeight;
+    const h2=head?head.offsetHeight:0;
+    const r=document.documentElement.style;
+    r.setProperty('--sticky-h',h1+'px');
+    r.setProperty('--sticky-h2',(h1+h2)+'px');
+  };
   upd();
-  if(window.ResizeObserver){try{new ResizeObserver(upd).observe(bar);}catch(e){}}
+  if(window.ResizeObserver){try{const ro=new ResizeObserver(upd);ro.observe(bar);if(head)ro.observe(head);}catch(e){}}
   window.addEventListener('resize',upd);
   window.addEventListener('load',upd);
 })();
