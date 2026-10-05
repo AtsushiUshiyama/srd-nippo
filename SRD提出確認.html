@@ -225,6 +225,7 @@ let curY, curM;          // 表示中の年・月(0-11)
 let HOLIDAY_SET=null;    // Set(YYYY-MM-DD)
 let SUBMIT_MAP={};       // date(YYYY-MM-DD) -> Set(name)
 let HWORK_MAP={};        // date(YYYY-MM-DD) -> Set(name) 休日出勤者（欠勤・休暇は除く）
+let LOAD_SEQ=0;          // 月切替の連打対策：古い応答を捨てるための通し番号
 let ME='';
 
 function pad2(n){return String(n).padStart(2,'0');}
@@ -247,7 +248,7 @@ async function fetchHolidaySet(){
 
 async function fetchMonthSubmissions(fromStr,toStr){
   const map={};
-  HWORK_MAP={};
+  const hwork={};
   try{
     const res=await fetch(PA_SUMMARY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',dateFrom:fromStr,dateTo:toStr})});
     const j=await res.json();
@@ -257,15 +258,16 @@ async function fetchMonthSubmissions(fromStr,toStr){
       if(!d||!nm)return;
       (map[d]=map[d]||new Set()).add(nm);
       const k=String(it.kintai||it['勤務区分']||'').trim();
-      if(k!=='欠勤'&&k!=='休暇'){(HWORK_MAP[d]=HWORK_MAP[d]||new Set()).add(nm);}
+      if(k!=='欠勤'&&k!=='休暇'){(hwork[d]=hwork[d]||new Set()).add(nm);}
     });
   }catch(e){console.warn('提出データ取得失敗',e);}
-  return map;
+  return {map,hwork};
 }
 
 function roster(dateStr){ return ATTEND_ROSTER.filter(n=>!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveOn(n,dateStr)); }
 
 async function loadMonth(){
+  const seq=++LOAD_SEQ;
   ME=getMe();
   renderMeBox();
   const first=new Date(curY,curM,1);
@@ -273,7 +275,9 @@ async function loadMonth(){
   document.getElementById('month-label').textContent=curY+'年'+(curM+1)+'月';
   document.getElementById('status').textContent='読み込み中…';
   const [hol,sub]=await Promise.all([fetchHolidaySet(), fetchMonthSubmissions(fmtYmd(first),fmtYmd(last)), fetchMembers()]);
-  SUBMIT_MAP=sub;
+  if(seq!==LOAD_SEQ)return;   // 後から始まった読み込みがある＝この応答は古いので捨てる
+  SUBMIT_MAP=sub.map;
+  HWORK_MAP=sub.hwork;
   render();
 }
 
