@@ -1339,10 +1339,16 @@ async function findMissingDates(){
   return{me,dates:missing};
 }
 async function checkAndShowMissing(){
-  const el=document.getElementById('missing-banner');
-  if(!el)return;
   let r;try{r=await findMissingDates();}catch(e){return;}
   const dates=r.dates;
+  // 統合ワークスペース内では、自前のバナーを出さずに親の共通ヘッダへ通知する
+  const embed=new URLSearchParams(location.search).get('embed')==='1';
+  if(embed){
+    try{window.parent.postMessage({srd:'missing',dates:dates,name:r.me},'*');}catch(e){}
+    return;
+  }
+  const el=document.getElementById('missing-banner');
+  if(!el)return;
   if(!dates.length){el.classList.remove('show');return;}
   const md=s=>{const p=s.split('-');return parseInt(p[1],10)+'/'+parseInt(p[2],10);};
   const links=dates.slice(0,3).map(s=>'<a onclick="onMissingDateClick(\''+s+'\')">'+md(s)+'</a>').join('、');
@@ -1362,6 +1368,11 @@ function onMissingDateClick(dateStr){document.getElementById('f-date').value=dat
   window.addEventListener('message',function(e){
     if(e&&e.data&&e.data.srd==='openHelp'){ if(typeof openHelp==='function')openHelp(); }
     if(e&&e.data&&e.data.srd==='reload'){ if(typeof reloadData==='function')reloadData(); }
+    // 共通ヘッダの未提出リンク。入力中の内容を消さないよう、作業日だけ差し替える
+    if(e&&e.data&&e.data.srd==='setDate'&&e.data.date){
+      const d=document.getElementById('f-date');
+      if(d){d.value=e.data.date;window.scrollTo({top:0,behavior:'smooth'});}
+    }
   });
 })();
 </script>

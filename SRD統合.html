@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>日報&勤怠</title>
-<!-- タブのアイコン。SPFx 側 src/common/utils/appFavicon.ts の採用案a と同じ定数
-     (viewBox 0 0 64 64 / #1a3a5c / rx 14 / font-size 42 / x 32 y 34)。
-     ★ 単体 HTML なので AppLauncher との照合はしない。JS も足さない。
-     ★ データ URI は全体をエンコード済み。色の # を素で入れるとフラグメント扱いに
-       なって壊れるので、書き換えるときも必ずエンコードすること。 -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20width%3D%2264%22%20height%3D%2264%22%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%231a3a5c%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2234%22%20font-size%3D%2242%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%F0%9F%93%9D%3C%2Ftext%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 :root{--accent:#1a3a5c;--sans:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;}
@@ -30,6 +24,12 @@ body{font-family:var(--sans);background:#f5f4f0;color:#1a1a1a;display:flex;flex-
 .hdrTab:hover{background:rgba(255,255,255,.12);color:#fff;}
 .hdrTabActive{background:#fff;color:#1a3a5c;font-weight:600;}
 .hdrSpacer{margin-left:auto;}
+/* 未提出のお知らせ（iframe内のツールから postMessage で受け取る） */
+.hdrMiss{display:none;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,235,235,.45);border-radius:16px;padding:4px 10px;font-size:12px;color:#ffe3e0;max-width:46vw;overflow:hidden;}
+.hdrMiss.show{display:inline-flex;}
+.hdrMiss b{color:#fff;font-weight:700;}
+.hdrMiss a{color:#fff;text-decoration:underline;cursor:pointer;font-weight:700;margin-left:2px;}
+.hdrMiss .mclose{background:transparent;border:none;color:#ffd9d4;font-size:15px;line-height:1;cursor:pointer;padding:0 2px;margin-left:2px;}
 .utilBtn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);display:inline-flex;align-items:center;gap:6px;}
 .utilBtn:hover{background:rgba(255,255,255,.28);}
 .helpBtn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:18px;font-weight:600;line-height:1;padding:0;margin-left:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:var(--sans);}
@@ -54,17 +54,6 @@ body{font-family:var(--sans);background:#f5f4f0;color:#1a1a1a;display:flex;flex-
 .tl-icon{font-size:20px;flex-shrink:0;width:24px;text-align:center;}
 .tl-name{flex:1;font-weight:500;}
 .tl-badge{font-size:10px;background:#1a3a5c;color:#fff;padding:2px 8px;border-radius:10px;font-weight:500;}
-/* グループ(ツリー)。行の見た目は .tl-item を踏襲する。button の既定を消して揃えること */
-.tl-group{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:none;border-radius:6px;background:transparent;color:#1f2937;font-size:14px;font-family:inherit;text-align:left;cursor:pointer;transition:background .15s ease;margin-bottom:4px;}
-.tl-group:hover{background:#f3f4f6;}
-.tl-group:focus-visible{outline:2px solid #1a3a5c;outline-offset:-2px;}
-/* シェブロンは幅を固定する。▸ と ▾ で行がずれないため */
-.tl-chev{font-size:11px;color:#6b7280;width:10px;flex-shrink:0;text-align:center;}
-.tl-count{font-size:11px;color:#6b7280;font-variant-numeric:tabular-nums;}
-.tl-children{list-style:none;padding:0;margin:0;}
-/* 子のインデント。シェブロン(10)+gap(12) ぶん右に寄せると子のアイコンがグループ名の左端に揃う */
-.tl-item.child{padding-left:36px;}
-.tl-item.child.current{padding-left:35px;}
 .tl-footer{margin-top:auto;padding-top:16px;border-top:1px solid #e5e7eb;color:#6b7280;text-align:center;}
 .logoBtn{cursor:pointer;}
 </style>
@@ -83,6 +72,7 @@ body{font-family:var(--sans);background:#f5f4f0;color:#1a1a1a;display:flex;flex-
       <button class="hdrTab" data-view="check">提出確認</button>
     </div>
     <div class="hdrSpacer"></div>
+    <span class="hdrMiss" id="hdr-miss"></span>
     <button class="utilBtn" id="reload" title="表示中の画面を再読み込み"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>更新</button>
     <button class="helpBtn" id="help" title="ヘルプ">?</button>
   </div>
@@ -123,7 +113,34 @@ document.querySelectorAll('.hdrTab').forEach(b=>{
 });
 document.getElementById('reload').addEventListener('click',()=>{ const f=activeFrame(); if(f&&f.contentWindow)f.contentWindow.postMessage({srd:'reload'},'*'); });
 document.getElementById('help').addEventListener('click',()=>{ const f=activeFrame(); if(f&&f.contentWindow)f.contentWindow.postMessage({srd:'openHelp'},'*'); });
+// 未提出のお知らせを青バーに出す（各画面から同じ内容が届くが、重ねて出ることはない）
+let MISS_DISMISSED=false;
+function renderHdrMiss(dates,name){
+  const el=document.getElementById('hdr-miss');
+  if(!el)return;
+  if(MISS_DISMISSED||!dates||!dates.length){el.classList.remove('show');el.innerHTML='';return;}
+  const md=s=>{const p=String(s).split('-');return parseInt(p[1],10)+'/'+parseInt(p[2],10);};
+  const links=dates.slice(0,3).map(s=>'<a onclick="srdOpenMiss(\''+s+'\')">'+md(s)+'</a>').join('、');
+  const extra=dates.length>3?('、他'+(dates.length-3)+'件'):'';
+  el.innerHTML='⚠ <b>未提出</b> '+links+extra+'<button class="mclose" title="閉じる">×</button>';
+  el.querySelector('.mclose').addEventListener('click',()=>{MISS_DISMISSED=true;el.classList.remove('show');});
+  el.classList.add('show');
+}
+function srdOpenMiss(dateStr){
+  const inp=document.getElementById('if-input');
+  // 日報入力を表示中なら読み込み直さない（入力途中の内容を失わないため）
+  if(body.dataset.view==='input'&&inp.contentWindow){
+    inp.contentWindow.postMessage({srd:'setDate',date:dateStr},'*');
+    return;
+  }
+  inp.src='SRD日報入力.html?embed=1&date='+encodeURIComponent(dateStr)+'&new=1';
+  body.dataset.view='input'; localStorage.setItem('srd-ws-view','input'); apply();
+}
+
 window.addEventListener('message',function(e){
+  if(e&&e.data&&e.data.srd==='missing'){
+    renderHdrMiss(e.data.dates,e.data.name);
+  }
   if(e&&e.data&&e.data.srd==='openEdit'){
     const inp=document.getElementById('if-input');
     let url='SRD日報入力.html?embed=1&date='+encodeURIComponent(e.data.date||'')+'&name='+encodeURIComponent(e.data.name||'');
@@ -134,117 +151,41 @@ window.addEventListener('message',function(e){
 });
 
 /* 社内ツール一覧（ロゴクリックで左からスライドイン） */
-/* フォールバック。apps.json が読めなかったときだけ使う。
-   ★ 中身は SPFx 5リポの toolList.ts (16件・md5 一致) から生成して合わせてある。
-     group も持たせること。持たせないとフォールバック時だけツリーが消えてフラットに戻る。
-   ★ nippo-admin / kintai / check の3つは AppLauncher に無い(または IsActive=false)ので
-     ここにだけある。**消さないこと。**このアプリの内部タブ切替の入口。 */
 const TOOLS=[
-  {key:'ポータル',name:'ポータル',icon:'🏠',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/ポータル.aspx?env=WebView'},
-  {key:'gantt',name:'工程',icon:'📊',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/SRD%E5%B7%A5%E7%A8%8B.aspx?env=WebView'},
-  {key:'calendar',name:'カレンダー',icon:'📅',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/SRD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC.aspx?env=WebView'},
-  {key:'projectMaster',name:'製番マスタ',icon:'🗃️',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E8%A3%BD%E7%95%AA%E3%83%9E%E3%82%B9%E3%82%BF.aspx?env=WebView',group:'マスタ'},
-  {key:'customerMaster',name:'顧客マスタ',icon:'💴',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E9%A1%A7%E5%AE%A2%E3%83%9E%E3%82%B9%E3%82%BF.aspx?env=WebView',group:'マスタ'},
-  {key:'supplierMaster',name:'仕入先マスタ',icon:'🚚',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/仕入先マスタ.aspx?env=WebView',group:'マスタ'},
-  {key:'employee',name:'従業員マスタ',icon:'👥',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E5%BE%93%E6%A5%AD%E5%93%A1%E3%83%9E%E3%82%B9%E3%82%BF.aspx?env=WebView',group:'マスタ'},
-  {key:'employeePrivate',name:'従業員個人情報',icon:'🔒',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E5%BE%93%E6%A5%AD%E5%93%A1%E5%80%8B%E4%BA%BA%E6%83%85%E5%A0%B1.aspx?env=WebView',group:'マスタ'},
-  {key:'mitsumori',name:'見積',icon:'🧮',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E8%A6%8B%E7%A9%8D.aspx?env=WebView'},
-  {key:'delivery',name:'納品',icon:'📦',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E7%B4%8D%E5%93%81.aspx?env=WebView'},
-  {key:'nippo-input',name:'日報&勤怠',icon:'📝',view:'input'},
+  {key:'gantt',name:'工程',icon:'📊',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/SRD%E5%B7%A5%E7%A8%8B.aspx?env=Embedded'},
+  {key:'calendar',name:'カレンダー',icon:'📅',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/SRD%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC.aspx?env=Embedded'},
+  {key:'projectMaster',name:'製番マスタ',icon:'🗃️',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E8%A3%BD%E7%95%AA%E3%83%9E%E3%82%B9%E3%82%BF.aspx?env=Embedded'},
+  {key:'customerMaster',name:'顧客マスタ',icon:'💴',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E9%A1%A7%E5%AE%A2%E3%83%9E%E3%82%B9%E3%82%BF.aspx?env=Embedded'},
+  {key:'mitsumori',name:'見積',icon:'🧮',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E8%A6%8B%E7%A9%8D.aspx?env=Embedded'},
+  {key:'nippo-input',name:'日報入力',icon:'📝',view:'input'},
   {key:'nippo-admin',name:'日報管理',icon:'📋',view:'nippo'},
   {key:'kintai',name:'勤怠管理',icon:'⏰',view:'kintai'},
   {key:'check',name:'提出確認',icon:'✅',view:'check'},
-  {key:'bento',name:'弁当発注',icon:'🍱',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/弁当発注.aspx?env=WebView'},
-  {key:'knowledge',name:'ナレッジ',icon:'📚',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8.aspx?env=WebView'},
-  {key:'internalProject',name:'社内プロジェクト',icon:'🧩',url:'https://sanritsudenki.sharepoint.com/sites/GanttDev/SitePages/%E7%A4%BE%E5%86%85PJ%E5%8F%B0%E5%B8%B3.aspx?env=WebView'},
-  {key:'doc-search',name:'図面・資料検索',icon:'📐',url:'https://zealous-ground-0f6467400.7.azurestaticapps.net/%E5%9B%B3%E9%9D%A2_%E8%B3%87%E6%96%99%E6%A4%9C%E7%B4%A2%E3%83%84%E3%83%BC%E3%83%AB.html'},
-  {key:'mbti',name:'MBTI',icon:'🧭',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E6%80%A7%E6%A0%BC%E3%82%BF%E3%82%A4%E3%83%97%E3%83%9E%E3%83%83%E3%83%97.aspx?env=WebView'},
+  {key:'knowledge',name:'ナレッジ',icon:'📚',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8.aspx?env=Embedded'},
+  {key:'mbti',name:'MBTI',icon:'🧭',url:'https://sanritsudenki.sharepoint.com/sites/msteams_ab63c2/SitePages/%E6%80%A7%E6%A0%BC%E3%82%BF%E3%82%A4%E3%83%97%E3%83%9E%E3%83%83%E3%83%97.aspx?env=Embedded'},
 ];
 /* AppLauncher 連携: 公開 apps.json を読んでランチャー一覧を差し替える。
    失敗時は上の TOOLS(フォールバック)のまま。
    自分自身の3画面(日報入力/日報管理/勤怠管理)は内部view切替に変換する。 */
 const OWN_VIEWS={'nippo-input':'input','nippo-admin':'nippo','kintai':'kintai'};
-/* --- グループ(ツリー) ---------------------------------------------------
-   ★ SPFx 側 src/common/components/ToolLauncher/ToolLauncher.tsx の buildNodes と
-     **同じ規則**。片方だけ直さないこと。
-   ★★ 空欄の表れ方が SPFx と違う。SPFx は Group 列を直読みするので空文字だが、
-     **apps.json 経由では null で来る**。null をグループ名として扱うと、group の無い
-     11項目が丸ごと「null という名前のグループ」に入り、ランチャーが 1行に潰れて
-     ほとんどのアプリが画面から消える。null / undefined / 空文字 / 空白のみ を
-     すべて「グループ無し」にすること。
-   ★ グループの並び位置は **配列に最初に現れた位置**。SPFx は「メンバーの最小
-     SortOrder」だが、apps.json のキーは key / name / icon / url / group の5つだけで
-     **sortOrder が無い**。並び順と有効フラグは取得側で処理済みで配列は既に
-     SortOrder 昇順なので、最初に現れた位置を使えば結果は同じになる。 */
-const GROUP_ICON='🗂';   // SPFx 側の GROUP_ICON と同じ絵文字に揃えること
-function normalizeGroup(v){
-  if(v===null||v===undefined)return undefined;
-  const t=String(v).replace(/^\s+|\s+$/g,'');
-  return t===''?undefined:t;
-}
-function buildNodes(list){
-  const nodes=[],idx={};
-  for(let i=0;i<list.length;i++){
-    const t=list[i],g=normalizeGroup(t.group);
-    if(g===undefined){nodes.push({kind:'tool',tool:t});continue;}
-    /* 接頭辞を付けるのは 'constructor' のようなグループ名でも壊れないようにするため */
-    const gk='group:'+g;
-    if(Object.prototype.hasOwnProperty.call(idx,gk))nodes[idx[gk]].children.push(t);
-    else{idx[gk]=nodes.length;nodes.push({kind:'group',key:gk,name:g,children:[t]});}
-  }
-  return nodes;
-}
-/* 開閉状態。**既定は閉じる。localStorage には残さない**（記憶しない） */
-let tlExpanded={};
 const APPS_JSON_URL='https://srdlauncher.blob.core.windows.net/launcher/apps.json';
 let tools=TOOLS; // 既定はフォールバック
 fetch(APPS_JSON_URL+'?t='+Date.now(),{cache:'no-cache'})
   .then(r=>{if(!r.ok)throw new Error('apps.json '+r.status);return r.json();})
   .then(list=>{
     if(!Array.isArray(list)||!list.length)return;
-    /* ★ group を落とさないこと。落とすと apps.json 経由のときだけツリーが消える。 */
     tools=list.map(t=>OWN_VIEWS[t.key]
-      ? {key:t.key,name:t.name,icon:t.icon,view:OWN_VIEWS[t.key],group:t.group}
-      : {key:t.key,name:t.name,icon:t.icon,url:t.url,group:t.group});
-    tlExpanded={};   // 一覧が入れ替わったので開閉状態は作り直す
+      ? {key:t.key,name:t.name,icon:t.icon,view:OWN_VIEWS[t.key]}
+      : {key:t.key,name:t.name,icon:t.icon,url:t.url});
   })
   .catch(()=>{/* フォールバック維持 */});
 const tlPanel=document.getElementById('tl-panel'),tlOverlay=document.getElementById('tl-overlay'),tlList=document.getElementById('tl-list');
 function renderTools(){
   const cur=body.dataset.view;
   /* 日報系をランチャー上で1項目に集約すると、現在viewに一致する項目が無いタブが出る。
-     完全一致があればその項目だけ「現在」、無ければ自アプリ項目(view保持)すべてを「現在」にする。
-     ★ 判定は tools(平坦な配列)全体で行う。**ツリーの畳み方に依存させないこと。**
-       グループの中に入った項目でも同じ式で決まる。 */
+     完全一致があればその項目だけ「現在」、無ければ自アプリ項目(view保持)すべてを「現在」にする。 */
   const hasExact=tools.some(t=>t.view===cur);
-  const isCur=t=>hasExact?(t.view===cur):!!t.view;
-
-  const nodes=buildNodes(tools);
-  /* 現在地を含むグループは開いた状態にする（SPFx 側と同じ規則）。
-     ★ このアプリから見るとマスタ系は全て外部ツールなので、実際には常に閉じたまま出る。
-       それでよい。将来 OWN_VIEWS の項目がグループに入ったときのために規則だけ揃えておく。 */
-  for(let i=0;i<nodes.length;i++){
-    const n=nodes[i];
-    if(n.kind==='group'&&n.children.some(isCur))tlExpanded[n.key]=true;
-  }
-
-  const itemHtml=(t,inGroup)=>'<li><a class="tl-item'+(inGroup?' child':'')+(isCur(t)?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur(t)?'<span class="tl-badge">現在</span>':'')+'</a></li>';
-
-  tlList.innerHTML=nodes.map(n=>{
-    if(n.kind==='tool')return itemHtml(n.tool,false);
-    const open=tlExpanded[n.key]===true;
-    /* ★ div+onClick にしないこと。button なら Tab で辿れて Enter/Space で開閉でき、
-       aria-expanded が読み上げに伝わる。 */
-    return '<li><button type="button" class="tl-group" data-group="'+n.key+'" aria-expanded="'+open+'">'
-      +'<span class="tl-chev" aria-hidden="true">'+(open?'▾':'▸')+'</span>'
-      +'<span class="tl-icon">'+GROUP_ICON+'</span>'
-      +'<span class="tl-name">'+n.name+'</span>'
-      +'<span class="tl-count">'+n.children.length+'</span></button>'
-      +(open?'<ul class="tl-children">'+n.children.map(c=>itemHtml(c,true)).join('')+'</ul>':'')
-      +'</li>';
-  }).join('');
-
-  [...tlList.querySelectorAll('.tl-group')].forEach(btn=>{btn.addEventListener('click',()=>{const k=btn.dataset.group;tlExpanded[k]=!tlExpanded[k];renderTools();});});
+  tlList.innerHTML=tools.map(t=>{const isCur=hasExact?(t.view===cur):!!t.view;return '<li><a class="tl-item'+(isCur?' current':'')+'" data-key="'+t.key+'"><span class="tl-icon">'+t.icon+'</span><span class="tl-name">'+t.name+'</span>'+(isCur?'<span class="tl-badge">現在</span>':'')+'</a></li>';}).join('');
   [...tlList.querySelectorAll('.tl-item')].forEach(a=>{a.addEventListener('click',()=>{const t=tools.find(x=>x.key===a.dataset.key);if(t.view){body.dataset.view=t.view;localStorage.setItem('srd-ws-view',t.view);apply();closeTL();}else if(t.url){window.open(t.url,'_blank','noopener,noreferrer');closeTL();}});});
 }
 function openTL(){renderTools();tlOverlay.classList.add('show');tlPanel.classList.add('show');}

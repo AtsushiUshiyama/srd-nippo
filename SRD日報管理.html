@@ -32,17 +32,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-secondary.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .btn-green{background:var(--green);color:#fff;}
 .btn-green:disabled{opacity:.35;cursor:not-allowed;}
-.section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:clip;}
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
 .section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
 .section-actions{margin-left:auto;}
-.table-wrap{overflow-x:auto;}
+/* PCでは横スクロール不要（table-layout:fixed）。overflow を外すと見出しの固定が効く */
+.table-wrap{overflow-x:visible;}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
 td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-all;}
 /* 作業詳細・進捗は折り返し表示 */
 #sagyou-tbody td:nth-child(7),
 #sagyou-tbody td:nth-child(7),#sagyou-tbody td:nth-child(8){white-space:pre-wrap;word-break:break-all;overflow:visible;text-overflow:clip;vertical-align:top;line-height:1.5;}
 thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
+thead th{position:sticky;top:var(--sticky-h,0px);z-index:50;}
+/* 横スクロールする幅では見出し固定が効かないため解除する */
+@media (max-width:600px){
+  .table-wrap{overflow-x:auto;}
+  thead th{position:static;}
+}
 thead th.sortable{cursor:pointer;user-select:none;}
 thead th.sortable:hover{color:var(--accent);background:var(--accent-soft);}
 thead th.sort-asc::after{content:' ▲';color:var(--accent);}
@@ -1273,10 +1280,16 @@ async function findMissingDates(){
   return{me,dates:missing};
 }
 async function checkAndShowMissing(){
-  const el=document.getElementById('missing-banner');
-  if(!el)return;
   let r;try{r=await findMissingDates();}catch(e){return;}
   const dates=r.dates;
+  // 統合ワークスペース内では、自前のバナーを出さずに親の共通ヘッダへ通知する
+  const embed=new URLSearchParams(location.search).get('embed')==='1';
+  if(embed){
+    try{window.parent.postMessage({srd:'missing',dates:dates,name:r.me},'*');}catch(e){}
+    return;
+  }
+  const el=document.getElementById('missing-banner');
+  if(!el)return;
   if(!dates.length){el.classList.remove('show');return;}
   const md=s=>{const p=s.split('-');return parseInt(p[1],10)+'/'+parseInt(p[2],10);};
   const links=dates.slice(0,3).map(s=>'<a onclick="onMissingDateClick(\''+s+'\')">'+md(s)+'</a>').join('、');
@@ -1300,6 +1313,17 @@ function onMissingDateClick(dateStr){const me=localStorage.getItem('srd_me_name'
   btn.addEventListener('touchend',cancel);
   btn.addEventListener('touchcancel',cancel);
   btn.addEventListener('click',function(e){if(longFired){longFired=false;e.preventDefault();e.stopImmediatePropagation();return;}if(typeof filterMe==='function')filterMe();});
+})();
+
+/* フィルターバーの高さをCSS変数に入れ、テーブル見出しをその直下に固定する */
+(function(){
+  const bar=document.querySelector('.filter-sticky');
+  if(!bar)return;
+  const upd=()=>document.documentElement.style.setProperty('--sticky-h',bar.offsetHeight+'px');
+  upd();
+  if(window.ResizeObserver){try{new ResizeObserver(upd).observe(bar);}catch(e){}}
+  window.addEventListener('resize',upd);
+  window.addEventListener('load',upd);
 })();
 
 /* 統合シェル(iframe)への埋め込み対応：?embed=1 でヘッダ非表示＋共通ヘルプ受信 */
