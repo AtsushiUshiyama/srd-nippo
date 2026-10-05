@@ -37,6 +37,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .section-actions{margin-left:auto;}
 .missing-badge{display:inline-block;background:#fdecea;color:#c0392b;border:1px solid #f5c6c1;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;margin-right:4px;white-space:nowrap;}
 .missing-label{color:var(--text-muted);font-size:11px;font-weight:600;margin-right:4px;}
+.mbadge{display:inline-block;background:#eee;color:#333;border:1px solid transparent;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;margin-right:4px;white-space:nowrap;}
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
 td,th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;word-break:keep-all;}
@@ -302,6 +303,7 @@ let sortKey='date', sortDir='desc';
 let lastLoadedFrom='', lastLoadedTo='';
 
 window.onload=async()=>{
+  fetchMembers();
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   // デフォルト：本日のみ
   const today=new Date();
@@ -525,6 +527,36 @@ const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 // 在籍メンバー名簿（日報入力の作業者名と一致させること。退職等で増減したらここを編集）
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ','ジュンス','鈴木 雄大','タイン'];
 
+// ── メンバーマスタ（SharePoint「Members」）：バッジのラベルと色 ──
+const PA_MEMBERS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/ad689300d67541bd96fb27c5efd38d65/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Fc5_32T5BerThELGj2I1N14A_zufBfbFrCMVk8T9YBA';
+let MEMBER_MAP={};       // 空白を除いた氏名 -> {label,initial,bg,fg}
+let MEMBER_LOADED=false;
+function _mkey(s){return String(s||'').replace(/[\s　]/g,'');}
+function _safeColor(c){return /^#[0-9a-fA-F]{3,8}$/.test(String(c||'').trim())?String(c).trim():'';}
+async function fetchMembers(){
+  if(MEMBER_LOADED)return MEMBER_MAP;
+  MEMBER_LOADED=true;
+  try{
+    const res=await fetch(PA_MEMBERS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)return MEMBER_MAP;
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    items.forEach(it=>{
+      const k=_mkey(it.name); if(!k)return;
+      MEMBER_MAP[k]={label:String(it.label||'').trim(),initial:String(it.initial||'').trim(),bg:_safeColor(it.bg),fg:_safeColor(it.fg)};
+    });
+  }catch(e){console.warn('メンバーマスタ取得失敗',e);}
+  return MEMBER_MAP;
+}
+// 氏名 → バッジHTML。マスタに無ければ灰色で氏名をそのまま出す
+function memberBadge(name,cls){
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const m=MEMBER_MAP[_mkey(name)];
+  const text=(m&&m.label)?m.label:name;
+  const style=(m&&m.bg)?('background:'+m.bg+';color:'+(m.fg||'#333')+';border-color:'+m.bg+';'):'';
+  return '<span class="'+(cls||'mbadge')+'" style="'+style+'" title="'+esc(name)+'">'+esc(text)+'</span>';
+}
+
 // 在籍期間（未提出判定用）。入社・退社があったらここに追記する
 // from=この日から対象／to=この日まで対象（省略した側は制限なし）
 const ROSTER_TERM={
@@ -571,8 +603,8 @@ function updateMissingMembers(f){
   const present=new Set(f.map(d=>d.name).filter(Boolean));
   const missing=all.filter(n=>!present.has(n)&&!MISSING_EXCLUDE.some(ex=>n.includes(ex))&&isActiveBetween(n,from,to));
   if(!missing.length){el.innerHTML='';return;}
-  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>'<span class="missing-badge">'+esc(n)+'</span>').join('');
+  el.innerHTML='<span class="missing-label">未提出：</span>'+missing.map(n=>memberBadge(n,'missing-badge')).join('');
+  if(!MEMBER_LOADED)fetchMembers().then(()=>updateMissingMembers(f));
 }
 
 function renderKintai(data){

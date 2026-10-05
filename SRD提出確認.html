@@ -69,6 +69,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .badge-count{display:inline-block;background:#c0392b;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;}
 .names-hwork{color:#1d4ed8;}
 .names{font-size:10px;color:#c0392b;margin-top:2px;word-break:break-all;line-height:1.15;max-height:34px;overflow:hidden;}
+.names.badges{max-height:46px;word-break:normal;}
+.mbadge{display:inline-block;background:#eee;color:#333;border:1px solid transparent;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;line-height:1.5;margin:0 3px 2px 0;white-space:nowrap;}
 .today-ring{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px;}
 .status{font-size:13px;color:var(--text-muted);margin:8px 2px;}
 .summary{margin-top:14px;font-size:14px;color:var(--text);background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
@@ -160,6 +162,36 @@ const PA_HOLIDAYS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environm
 const ATTEND_ROSTER=['牛山 厚志','牛山 滋','藤原 博文','井折 顕太郎','妹尾 恵吾','杉本 裕樹','アイン','吉本 翔太','徳留 茂人','増田 大将','田里 絵美','松下 歩美','大野 潤','永井 遼','ケイ','ジュンス','鈴木 雄大','タイン'];
 const MISSING_EXCLUDE=['松田','桐山','宇野','市川','窪','金井'];
 
+// ── メンバーマスタ（SharePoint「Members」）：バッジのラベルと色 ──
+const PA_MEMBERS_URL='https://defaultde93a53b9bc84e86bab55a758c3979.6d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/ad689300d67541bd96fb27c5efd38d65/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Fc5_32T5BerThELGj2I1N14A_zufBfbFrCMVk8T9YBA';
+let MEMBER_MAP={};       // 空白を除いた氏名 -> {label,initial,bg,fg}
+let MEMBER_LOADED=false;
+function _mkey(s){return String(s||'').replace(/[\s　]/g,'');}
+function _safeColor(c){return /^#[0-9a-fA-F]{3,8}$/.test(String(c||'').trim())?String(c).trim():'';}
+async function fetchMembers(){
+  if(MEMBER_LOADED)return MEMBER_MAP;
+  MEMBER_LOADED=true;
+  try{
+    const res=await fetch(PA_MEMBERS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)return MEMBER_MAP;
+    const j=await res.json();
+    const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
+    items.forEach(it=>{
+      const k=_mkey(it.name); if(!k)return;
+      MEMBER_MAP[k]={label:String(it.label||'').trim(),initial:String(it.initial||'').trim(),bg:_safeColor(it.bg),fg:_safeColor(it.fg)};
+    });
+  }catch(e){console.warn('メンバーマスタ取得失敗',e);}
+  return MEMBER_MAP;
+}
+// 氏名 → バッジHTML。マスタに無ければ灰色で氏名をそのまま出す
+function memberBadge(name,cls){
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const m=MEMBER_MAP[_mkey(name)];
+  const text=(m&&m.label)?m.label:name;
+  const style=(m&&m.bg)?('background:'+m.bg+';color:'+(m.fg||'#333')+';border-color:'+m.bg+';'):'';
+  return '<span class="'+(cls||'mbadge')+'" style="'+style+'" title="'+esc(name)+'">'+esc(text)+'</span>';
+}
+
 // 在籍期間（未提出判定用）。入社・退社があったらここに追記する
 // from=この日から対象／to=この日まで対象（省略した側は制限なし）
 const ROSTER_TERM={
@@ -240,7 +272,7 @@ async function loadMonth(){
   const last=new Date(curY,curM+1,0);
   document.getElementById('month-label').textContent=curY+'年'+(curM+1)+'月';
   document.getElementById('status').textContent='読み込み中…';
-  const [hol,sub]=await Promise.all([fetchHolidaySet(), fetchMonthSubmissions(fmtYmd(first),fmtYmd(last))]);
+  const [hol,sub]=await Promise.all([fetchHolidaySet(), fetchMonthSubmissions(fmtYmd(first),fmtYmd(last)), fetchMembers()]);
   SUBMIT_MAP=sub;
   render();
 }
@@ -293,7 +325,7 @@ function render(){
         } else {
           cell.classList.add('hwork'); hworkCount+=workers.length;
           const t=document.createElement('div'); t.className='tag tag-hwork'; t.textContent='休日出勤 '+workers.length+'名'; cell.appendChild(t);
-          const nm=document.createElement('div'); nm.className='names names-hwork'; nm.textContent=workers.join('・'); cell.appendChild(nm);
+          const nm=document.createElement('div'); nm.className='names names-hwork badges'; nm.innerHTML=workers.map(n=>memberBadge(n)).join(''); cell.appendChild(nm);
         }
       }
     } else if(!isPast){
@@ -325,7 +357,7 @@ function render(){
         } else {
           cell.classList.add('miss'); missCount+=missing.length;
           const t=document.createElement('div'); t.className='tag'; t.innerHTML='<span class="badge-count">未'+missing.length+'</span>'; cell.appendChild(t);
-          const nm=document.createElement('div'); nm.className='names'; nm.textContent=missing.join('・'); cell.appendChild(nm);
+          const nm=document.createElement('div'); nm.className='names badges'; nm.innerHTML=missing.map(n=>memberBadge(n)).join(''); cell.appendChild(nm);
         }
       }
     }
