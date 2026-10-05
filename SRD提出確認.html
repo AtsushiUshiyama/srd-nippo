@@ -41,7 +41,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
 .lg-off{background:#f0f0f0;border:1px solid #ddd;}
 .lg-hwork{background:#eef4fb;border:1px solid #9bbbe4;}
 
-.cal{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.cal{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;}
+.cal-loading{display:none;position:absolute;inset:0;z-index:5;background:rgba(255,255,255,.72);align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:600;color:var(--accent);}
+.cal-loading.show{display:flex;}
+.cal-loading .spin{width:18px;height:18px;border:2px solid #cfd6e0;border-top-color:var(--accent);border-radius:50%;animation:srdspin .7s linear infinite;}
+@keyframes srdspin{to{transform:rotate(360deg);}}
 .cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:#f7f4ee;border-bottom:1px solid var(--border);}
 .cal-head div{padding:8px 0;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);}
 .cal-head div.sun{color:#c0392b;}
@@ -132,6 +136,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);}
         <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-loading" id="cal-loading"><span class="spin"></span>読み込み中…</div>
     </div>
     <div class="summary" id="summary"></div>
   </div>
@@ -273,12 +278,19 @@ async function loadMonth(){
   const first=new Date(curY,curM,1);
   const last=new Date(curY,curM+1,0);
   document.getElementById('month-label').textContent=curY+'年'+(curM+1)+'月';
-  document.getElementById('status').textContent='読み込み中…';
+  document.getElementById('status').textContent='';
+  setLoading(true);
   const [hol,sub]=await Promise.all([fetchHolidaySet(), fetchMonthSubmissions(fmtYmd(first),fmtYmd(last)), fetchMembers()]);
   if(seq!==LOAD_SEQ)return;   // 後から始まった読み込みがある＝この応答は古いので捨てる
   SUBMIT_MAP=sub.map;
   HWORK_MAP=sub.hwork;
   render();
+  setLoading(false);
+}
+
+function setLoading(on){
+  const el=document.getElementById('cal-loading');
+  if(el)el.classList.toggle('show',!!on);
 }
 
 function isWorkday(dateStr,dow){
