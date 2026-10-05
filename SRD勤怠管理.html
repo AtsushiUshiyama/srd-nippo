@@ -147,11 +147,14 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
 .side-panel{display:contents;}
 /* ── 右サイドパネル版（PC幅のみ）：左=勤怠一覧／右=フィルター ── */
 @media (min-width:1200px){
-  .main{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto auto 1fr;column-gap:16px;padding:0 16px;}
+  /* ページ全体は動かさず、左の一覧（.list-scroll）だけをスクロールさせる。スクロールバーは右ペインの左に出る */
+  body{height:100vh;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+  .main{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto auto minmax(0,1fr);column-gap:16px;padding:0 16px;flex:1 1 auto;min-height:0;width:100%;}
   #missing-banner{grid-column:1;grid-row:1;}
   #error-msg{grid-column:1;grid-row:2;}
-  .section.main-list{grid-column:1;grid-row:3;align-self:start;margin-top:12px;margin-bottom:80px;}
-  .side-panel{grid-column:2;grid-row:1 / span 3;align-self:start;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;padding:12px 0;}
+  .list-scroll{grid-column:1;grid-row:3;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:0 0 24px;}
+  .section.main-list{margin:12px 0 0;}
+  .side-panel{grid-column:2;grid-row:1 / span 3;align-self:stretch;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 0;}
   .side-panel .filter-sticky{position:static;box-shadow:none;padding:0 0 10px;}
   .side-panel .filter-bar{padding:14px 16px;margin-bottom:8px;}
   .side-panel .filter-row{gap:8px;}
@@ -159,7 +162,6 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   .side-panel .filter-field.ff-btn{flex:0 0 auto;}
   .side-panel .filter-field.ff-full{flex:1 1 100%;}
   .side-panel .filter-row-date .filter-actions{flex:1 1 100%;flex-wrap:wrap;margin-left:0;}
-  html{scrollbar-gutter:stable;}
   .side-panel .filter-bar.grouped{flex-direction:column;flex-wrap:nowrap;align-items:stretch;row-gap:12px;}
   .side-panel .filter-group+.filter-group{border-top:1px solid var(--border);padding-top:12px;}
   .side-panel .fg-member{padding-bottom:8px;}
@@ -203,16 +205,16 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="help-panel-body">
     <h4>基本の流れ</h4>
     <ol style="margin:4px 0 10px 0;padding-left:22px;">
-      <li>期間と作業者を絞り込む（期間ボタンを押すと自動でデータ取得される）</li>
+      <li>期間とメンバーを絞り込む（期間ボタンを押すと自動でデータ取得される）</li>
       <li>勤怠一覧の行をクリック → <strong>編集</strong>ボタンが有効になる</li>
       <li><strong>編集</strong>ボタンを押すと、その日の日報がSRD日報入力で開く</li>
     </ol>
 
     <h4>🏢 ワークスペース（統合画面）</h4>
-    <p>共通ヘッダのタブ（日報入力／日報管理／勤怠管理）で画面を切替。会社ロゴのクリックで社内ツール一覧（工程・カレンダー・製番マスタ等）が開きます。右上の<strong>更新</strong>は表示中画面を今の条件のまま最新化、<strong>？</strong>は表示中画面のヘルプです。</p>
+    <p>共通ヘッダのタブ（日報入力／日報管理／勤怠管理／提出確認）で画面を切替。会社ロゴのクリックで社内ツール一覧（工程・カレンダー・製番マスタ等）が開きます。右上の<strong>更新</strong>は表示中画面を今の条件のまま最新化、<strong>？</strong>は表示中画面のヘルプです。</p>
 
     <h4>期間フィルタ</h4>
-    <p>開いた直後は<strong>直近2か月</strong>を表示（統合画面で開いた時。単独で開いた時は<strong>本日のみ</strong>）。フィルターは<strong>メンバー → 日付 → 顧客名 → 作業種別・製番</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
+    <p>開いた直後は<strong>直近2か月</strong>を表示（統合画面で開いた時。単独で開いた時は<strong>本日のみ</strong>）。フィルターは<strong>メンバー → 日付</strong>の順（PC幅では画面右側に固定、狭い幅では上部に固定）。日付を手修正してどの期間ボタンにも当てはまらない時は<strong>日付欄が黄色くハイライト</strong>されます。</p>
     <ul>
       <li><strong>全期間</strong>：全データ</li>
       <li><strong>直近1年</strong>／<strong>直近2か月</strong>／<strong>直近1か月</strong></li>
@@ -238,10 +240,10 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <p>勤怠一覧の行をクリックして選択 → 上部の<strong>編集</strong>ボタンを押すと、その日の日報を日報入力で開く。統合ワークスペースでは<strong>日報入力タブ内</strong>で開きます。</p>
 
     <h4>⚠ 未提出の日報（自分）</h4>
-    <p>「自分」を設定していると、過去30日にあなた自身の未提出日があるとき上部へ赤い帯で表示されます。日付をクリックすると、その日の新規入力画面が開きます（統合では日報入力タブ内／単独では別タブ。土日・休日は対象外）。</p>
+    <p>「自分」を設定していると、過去30日にあなた自身の未提出日があるとき赤いお知らせで表示されます（統合画面では共通ヘッダの赤いバッジ、単独で開いた時は上部の赤い帯）。日付をクリックすると、その日の新規入力画面が開きます（統合では日報入力タブ内／単独では別タブ。土日・休日は対象外）。</p>
 
     <h4>未提出メンバー</h4>
-    <p>作業者フィルタが「全員」のとき、<strong>表示期間内に日報を出していない在籍メンバー</strong>を赤バッジで表示。本日表示なら「今日まだ出していない人」、締め期間表示なら「その期間で一度も出していない人」になります。土日や休日カレンダーの休業日を1日だけ表示しているときは出ません。</p>
+    <p>メンバーが「全員」のとき、一覧の見出しに<strong>出すべき日に日報が出ていないメンバー</strong>を赤いバッジで表示します。数字は欠けている日数です（例：<code>社長：3</code>）。数えるのは表示期間のうち土日・休業日を除く日で、前日まで（当日は数えない）、運用開始日（2026-05-25）以降かつ在籍期間内の日です。</p>
 
     <h4>CSV出力</h4>
     <p>表示中の勤怠一覧をそのままCSVで出力。</p>
@@ -258,7 +260,8 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     <h4>困った時</h4>
     <ul>
       <li>データが出ない → 期間を狭めて再読み込み</li>
-      <li>未提出バッジが出ない → 作業者フィルタを「全員」にする</li>
+      <li>一覧の末尾に「表示は先頭 1,500 行まで」と出る → 期間で絞り込むか、CSV出力を使う（CSVは全件が対象）</li>
+      <li>未提出バッジが出ない → メンバーを「全員」にする</li>
       <li>その他の不具合・改善案 → Chatwork【新しい作業日報】で社長に報告</li>
     </ul>
   </div>
@@ -298,6 +301,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
   <div class="result-bar">表示中：<span class="result-count" id="result-count">—</span></div>
   </div>
   </aside>
+  <div class="list-scroll">
   <div class="section main-list">
     <div class="section-header sticky-head">
       <span class="section-label">勤怠一覧</span>
@@ -323,6 +327,7 @@ td.empty-cell{text-align:center;color:var(--text-hint);padding:24px;}
     </table></div>
   </div>
 
+  </div>
 </div>
 <script>
 
