@@ -33,19 +33,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .main{max-width:1100px;margin:0 auto;padding:24px 20px 80px;}
 .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;}
 .section-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;gap:10px;}
-.section-label{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
+.section-label{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--text);text-transform:uppercase;white-space:nowrap;}
 .section-body{padding:16px 18px;}
 .form-grid{display:grid;gap:14px;}
 .g3{grid-template-columns:160px 180px 1fr;}
 .g5{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;}
-.field label{display:block;font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
+.field label{display:block;font-size:12px;font-weight:600;color:#5c5548;margin-bottom:5px;letter-spacing:.03em;}
 .work-table textarea{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;resize:vertical;min-height:36px;line-height:1.4;box-sizing:border-box;}
 .work-table textarea:focus{border-color:var(--blue);}
 .field input,.field select{width:100%;font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none;transition:border-color .15s;}
 .field input:focus,.field select:focus{border-color:var(--border-focus);background:#fff;}
 .field input[readonly]{background:var(--surface2);color:var(--text-muted);cursor:default;}
 .check-field{display:flex;flex-direction:column;gap:6px;}
-.check-field label.top{font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.03em;}
+.check-field label.top{font-size:12px;font-weight:600;color:#5c5548;letter-spacing:.03em;}
 .check-row{display:flex;gap:8px;}
 .check-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--text);padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;transition:all .15s;user-select:none;flex:1;white-space:nowrap;}
 .check-label:hover{border-color:var(--border-focus);}
@@ -69,7 +69,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
 .clock-ok:hover{opacity:.85;}
 .clock-cancel{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:none;font-size:14px;cursor:pointer;font-family:var(--sans);color:var(--text-muted);}
 .work-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-.work-table thead th{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);text-transform:uppercase;text-align:left;padding:0 6px 8px;white-space:nowrap;}
+.work-table thead th{font-size:12px;font-weight:700;letter-spacing:.04em;color:#5c5548;text-transform:uppercase;text-align:left;padding:0 6px 8px;white-space:nowrap;}
 .work-table thead th:first-child{padding-left:0;}
 .th-dur{width:110px;}.th-seiban{width:130px;}.th-type{width:110px;}.th-detail{width:240px;}.th-progress{width:240px;}.th-del{width:32px;}
 .work-table td,.work-table th{overflow:hidden;}
@@ -161,7 +161,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
   .field .tooltip-wrap{max-width:100%;}
   .field input,.field select{font-size:16px;height:40px;}
   .time-btn{font-size:15px;height:40px;}
-  .field label{font-size:11px;}
+  .field label{font-size:12px;}
   .btn{padding:10px 14px;font-size:14px;}
   .work-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   table.work-table{min-width:760px;}
@@ -406,7 +406,7 @@ canvas.clock-canvas{cursor:pointer;touch-action:none;border-radius:50%;backgroun
   <div class="section">
     <div class="section-header">
       <span class="section-label">作業明細</span>
-      <span id="row-count" style="font-family:var(--mono);font-size:11px;color:var(--text-hint);margin-left:auto;">0 行</span>
+      <span id="row-count" style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-left:auto;">0 行</span>
     </div>
     <div class="section-body">
       <div class="work-table-wrap">
