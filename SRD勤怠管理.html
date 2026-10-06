@@ -638,7 +638,7 @@ function updatePeriodButtonHighlight(){
   const shime20To=fmt(new Date(today.getFullYear(),today.getMonth(),20));
   if(from===shime20From&&to===shime20To){document.getElementById('btn-period-shime20').classList.add('active');return;}
   // 末締め
-  const shimeMFrom=fmt(new Date(today.getFullYear(),today.getMonth()-1,0));
+  const shimeMFrom=fmt(new Date(today.getFullYear(),today.getMonth()-1,1));
   const shimeMTo=fmt(new Date(today.getFullYear(),today.getMonth(),0));
   if(from===shimeMFrom&&to===shimeMTo){document.getElementById('btn-period-shimeM').classList.add('active');return;}
   // 日付ピンポイント系（from===to のときのみ）
@@ -1045,8 +1045,8 @@ function setPeriod(period){
     applyPeriod();
     return;
   }else if(period==='shimeM'){
-    // 末締め：前々月末日〜前月末日（Date月にゼロ日を渡すと前月末になる仕様を利用）
-    const fromD=new Date(today.getFullYear(),today.getMonth()-1,0);
+    // 末締め：前月1日〜前月末日（Date月にゼロ日を渡すと前月末になる仕様を利用）
+    const fromD=new Date(today.getFullYear(),today.getMonth()-1,1);
     const toD=new Date(today.getFullYear(),today.getMonth(),0);
     document.getElementById('filter-from').value=fmtDate(fromD);
     document.getElementById('filter-to').value=fmtDate(toD);
