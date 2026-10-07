@@ -682,7 +682,10 @@ async function fetchMembers(){
     const items=Array.isArray(j)?j:(j.value||j.body?.value||[]);
     items.forEach(it=>{
       const k=_mkey(it.name); if(!k)return;
-      MEMBER_MAP[k]={label:String(it.label||'').trim(),initial:String(it.initial||'').trim(),bg:_safeColor(it.bg),fg:_safeColor(it.fg)};
+      const v={label:String(it.label||'').trim(),initial:String(it.initial||'').trim(),bg:_safeColor(it.bg),fg:_safeColor(it.fg)};
+      MEMBER_MAP[k]=v;
+      // FullNameが正式名（例：グエン ドゥック アイン）でも日報の氏名（アイン）で引けるよう、タイトルでも登録する。FullName一致を優先
+      const lk=_mkey(it.label); if(lk&&!MEMBER_MAP[lk])MEMBER_MAP[lk]=v;
     });
   }catch(e){console.warn('メンバーマスタ取得失敗',e);}
   return MEMBER_MAP;
